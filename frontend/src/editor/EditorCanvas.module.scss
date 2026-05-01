@@ -1,0 +1,72 @@
+@use '../styles/variables' as *;
+
+.workspace {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background-color: var(--color-workspace-bg);
+  background-image: radial-gradient(
+    circle,
+    var(--color-workspace-dot) 1px,
+    transparent 1px
+  );
+  background-size: 20px 20px;
+}
+
+.canvasFrame {
+  position: relative;
+  box-shadow: var(--shadow-canvas);
+  flex-shrink: 0;
+  // zoom via CSS transform — layout size stays constant
+  // actual pixel size comes from template.canvas dimensions
+}
+
+.zoomWidget {
+  position: absolute;
+  bottom: $space-4;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: $space-1;
+  padding: $space-1 $space-2;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border-default);
+  border-radius: $radius-full;
+  box-shadow: var(--shadow-md);
+}
+
+.zoomBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: $radius-md;
+  font-size: $font-size-sm;
+  color: var(--color-text-secondary);
+  transition: background $transition-fast;
+
+  &:hover {
+    background: var(--color-bg-hover);
+    color: var(--color-text-primary);
+  }
+}
+
+.zoomValue {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: var(--color-text-primary);
+  min-width: 36px;
+  text-align: center;
+}
+
+.zoomDivider {
+  width: 1px;
+  height: 14px;
+  background: var(--color-border-default);
+  margin: 0 $space-1;
+}
