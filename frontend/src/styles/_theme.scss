@@ -1,0 +1,117 @@
+:root {
+  color-scheme: light;
+
+  // Surfaces
+  --color-bg-app:        #F0EFED;
+  --color-bg-primary:    #FFFFFF;
+  --color-bg-secondary:  #F5F4F2;
+  --color-bg-tertiary:   #EBEBEA;
+  --color-bg-hover:      #EFEFEE;
+  --color-bg-active:     #E8E7E5;
+
+  // Workspace (the infinite pan area)
+  --color-workspace-bg:  #CBCBC8;
+  --color-workspace-dot: rgba(0, 0, 0, 0.18);
+
+  // Text
+  --color-text-primary:   #111111;
+  --color-text-secondary: #555555;
+  --color-text-tertiary:  #999999;
+  --color-text-disabled:  #BBBBBB;
+  --color-text-inverse:   #FFFFFF;
+
+  // Borders
+  --color-border-subtle:  rgba(0, 0, 0, 0.07);
+  --color-border-default: rgba(0, 0, 0, 0.12);
+  --color-border-strong:  rgba(0, 0, 0, 0.22);
+
+  // Brand / accent
+  --color-accent:         #6366F1;
+  --color-accent-hover:   #4F46E5;
+  --color-accent-subtle:  #EEF2FF;
+  --color-accent-text:    #4338CA;
+
+  // Selection / canvas handles
+  --color-selection:      #4A90D9;
+  --color-selection-bg:   rgba(74, 144, 217, 0.08);
+
+  // Semantic
+  --color-success:        #16A34A;
+  --color-success-subtle: #F0FDF4;
+  --color-warning:        #D97706;
+  --color-warning-subtle: #FFFBEB;
+  --color-danger:         #DC2626;
+  --color-danger-subtle:  #FEF2F2;
+  --color-info:           #2563EB;
+  --color-info-subtle:    #EFF6FF;
+
+  // Binding badge (data binding indicator)
+  --color-binding-bg:     #EEF2FF;
+  --color-binding-text:   #4338CA;
+  --color-binding-border: #C7D2FE;
+
+  // Shadows
+  --shadow-sm:     0 1px 3px rgba(0, 0, 0, 0.08);
+  --shadow-md:     0 2px 8px rgba(0, 0, 0, 0.10);
+  --shadow-lg:     0 4px 20px rgba(0, 0, 0, 0.13);
+  --shadow-canvas: 0 2px 24px rgba(0, 0, 0, 0.18);
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  // Surfaces
+  --color-bg-app:        #1A1A1A;
+  --color-bg-primary:    #242424;
+  --color-bg-secondary:  #2C2C2C;
+  --color-bg-tertiary:   #333333;
+  --color-bg-hover:      #303030;
+  --color-bg-active:     #383838;
+
+  // Workspace
+  --color-workspace-bg:  #141414;
+  --color-workspace-dot: rgba(255, 255, 255, 0.08);
+
+  // Text
+  --color-text-primary:   #F0F0F0;
+  --color-text-secondary: #AAAAAA;
+  --color-text-tertiary:  #666666;
+  --color-text-disabled:  #444444;
+  --color-text-inverse:   #111111;
+
+  // Borders
+  --color-border-subtle:  rgba(255, 255, 255, 0.06);
+  --color-border-default: rgba(255, 255, 255, 0.10);
+  --color-border-strong:  rgba(255, 255, 255, 0.18);
+
+  // Brand / accent
+  --color-accent:         #818CF8;
+  --color-accent-hover:   #6366F1;
+  --color-accent-subtle:  #1E1B4B;
+  --color-accent-text:    #A5B4FC;
+
+  // Selection
+  --color-selection:      #4A90D9;
+  --color-selection-bg:   rgba(74, 144, 217, 0.12);
+
+  // Semantic
+  --color-success:        #4ADE80;
+  --color-success-subtle: #052E16;
+  --color-warning:        #FCD34D;
+  --color-warning-subtle: #1C1008;
+  --color-danger:         #F87171;
+  --color-danger-subtle:  #1C0606;
+  --color-info:           #60A5FA;
+  --color-info-subtle:    #0C1A3D;
+
+  // Binding badge
+  --color-binding-bg:     #1E1B4B;
+  --color-binding-text:   #A5B4FC;
+  --color-binding-border: #3730A3;
+
+  // Shadows (more subtle in dark mode)
+  --shadow-sm:     0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow-md:     0 2px 8px rgba(0, 0, 0, 0.4);
+  --shadow-lg:     0 4px 20px rgba(0, 0, 0, 0.5);
+  --shadow-canvas: 0 2px 24px rgba(0, 0, 0, 0.6);
+}
