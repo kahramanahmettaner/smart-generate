@@ -14,14 +14,28 @@
     transparent 1px
   );
   background-size: 20px 20px;
+  cursor: default;
+
+  // Middle mouse or space+drag — show grab cursor
+  &.panMode {
+    cursor: grab;
+  }
+
+  &.panning {
+    cursor: grabbing;
+
+    // Prevent text selection while panning
+    user-select: none;
+  }
 }
 
 .canvasFrame {
-  position: relative;
+  position: absolute;
   box-shadow: var(--shadow-canvas);
   flex-shrink: 0;
-  // zoom via CSS transform — layout size stays constant
-  // actual pixel size comes from template.canvas dimensions
+  // will-change tells browser to composite this layer
+  // for smoother pan/zoom transforms
+  will-change: transform;
 }
 
 .zoomWidget {
@@ -37,6 +51,7 @@
   border: 1px solid var(--color-border-default);
   border-radius: $radius-full;
   box-shadow: var(--shadow-md);
+  user-select: none;
 }
 
 .zoomBtn {
@@ -60,8 +75,15 @@
   font-size: $font-size-sm;
   font-weight: $font-weight-medium;
   color: var(--color-text-primary);
-  min-width: 36px;
+  min-width: 40px;
   text-align: center;
+  border-radius: $radius-md;
+  padding: 2px $space-1;
+  transition: background $transition-fast;
+
+  &:hover {
+    background: var(--color-bg-hover);
+  }
 }
 
 .zoomDivider {
@@ -69,4 +91,26 @@
   height: 14px;
   background: var(--color-border-default);
   margin: 0 $space-1;
+}
+
+.panHint {
+  position: absolute;
+  top: $space-4;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  color: var(--color-text-secondary);
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border-default);
+  border-radius: $radius-full;
+  padding: $space-1 $space-3;
+  box-shadow: var(--shadow-sm);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity $transition-base;
+
+  &.panHintVisible {
+    opacity: 1;
+  }
 }
