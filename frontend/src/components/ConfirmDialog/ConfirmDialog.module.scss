@@ -1,0 +1,94 @@
+@use '../../styles/variables' as *;
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000; // above asset picker (1000)
+  backdrop-filter: blur(1px);
+}
+
+.dialog {
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border-default);
+  border-radius: $radius-xl;
+  padding: $space-5 $space-5 $space-4;
+  width: 320px;
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+}
+
+.title {
+  font-size: $font-size-base;
+  font-weight: $font-weight-medium;
+  color: var(--color-text-primary);
+  line-height: $line-height-tight;
+}
+
+.message {
+  font-size: $font-size-sm;
+  color: var(--color-text-secondary);
+  line-height: $line-height-loose;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: $space-2;
+  margin-top: $space-2;
+}
+
+.cancelBtn {
+  height: 32px;
+  padding: 0 $space-4;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  border: 1px solid var(--color-border-default);
+  border-radius: $radius-md;
+  color: var(--color-text-secondary);
+  background: transparent;
+  transition: all $transition-fast;
+
+  &:hover {
+    background: var(--color-bg-hover);
+    color: var(--color-text-primary);
+  }
+}
+
+.confirmBtn {
+  height: 32px;
+  padding: 0 $space-4;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  border: 1px solid transparent;
+  border-radius: $radius-md;
+  background: var(--color-accent);
+  color: #ffffff;
+  transition: all $transition-fast;
+
+  &:hover {
+    background: var(--color-accent-hover);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+
+  &.confirmDanger {
+    background: var(--color-danger);
+
+    &:hover {
+      background: #b91c1c;
+    }
+
+    &:focus-visible {
+      outline-color: var(--color-danger);
+    }
+  }
+}
