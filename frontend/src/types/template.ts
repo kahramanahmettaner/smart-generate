@@ -2,6 +2,13 @@ export type BindableString =
   | { type: 'static'; value: string }
   | { type: 'binding'; column: string }
 
+// Image sources get their own type — more explicit than BindableString
+export type ImageSrc =
+  | { type: 'asset';   assetId: string }
+  | { type: 'binding'; column: string }
+  | { type: 'none' }  // placeholder state — no asset selected yet
+
+
 export type BindableNumber =
   | { type: 'static'; value: number }
   | { type: 'binding'; column: string }
@@ -53,7 +60,7 @@ export type TextElement = BaseElement & {
 export type ImageElement = BaseElement & {
   type: 'image'
   props: {
-    src: BindableString
+    src: ImageSrc
     fit: 'cover' | 'contain' | 'fill'
   }
 }

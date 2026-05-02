@@ -19,7 +19,7 @@ export function SelectionTransformer({ selectedId, stageRef, onTransformEnd }: P
 
   useEffect(() => {
     const transformer = transformerRef.current
-    const stage = stageRef.current
+    const stage       = stageRef.current
     if (!transformer || !stage) return
 
     if (!selectedId) {
@@ -53,18 +53,41 @@ export function SelectionTransformer({ selectedId, stageRef, onTransformEnd }: P
       onTransformEnd={() => {
         const stage = stageRef.current
         if (!stage || !selectedId) return
+
         const node = stage.findOne(`#${selectedId}`)
         if (!node) return
+
+        const scaleX   = node.scaleX()
+        const scaleY   = node.scaleY()
+        const rotation = Math.round(node.rotation())
+
+        // Always read stored width/height attrs — never use getClientRect
+        // getClientRect returns the rotated bounding box which is wrong for our purposes
+        const storedW = node.getAttr('width')  as number | undefined
+        const storedH = node.getAttr('height') as number | undefined
+
+        // If scale hasn't changed (pure rotation), keep original dimensions exactly
+        const scaleChanged = Math.abs(scaleX - 1) > 0.001 || Math.abs(scaleY - 1) > 0.001
+
+        const width  = scaleChanged
+          ? Math.max(1, Math.round((storedW ?? node.width())  * scaleX))
+          : Math.max(1, Math.round(storedW ?? node.width()))
+
+        const height = scaleChanged
+          ? Math.max(1, Math.round((storedH ?? node.height()) * scaleY))
+          : Math.max(1, Math.round(storedH ?? node.height()))
+
+        // Reset scale — baked into width/height above
+        node.scaleX(1)
+        node.scaleY(1)
+
         onTransformEnd(selectedId, {
           x: Math.round(node.x()),
           y: Math.round(node.y()),
-          width: Math.round(node.width() * node.scaleX()),
-          height: Math.round(node.height() * node.scaleY()),
-          rotation: Math.round(node.rotation()),
+          width,
+          height,
+          rotation,
         })
-        // Reset scale after baking into width/height
-        node.scaleX(1)
-        node.scaleY(1)
       }}
     />
   )

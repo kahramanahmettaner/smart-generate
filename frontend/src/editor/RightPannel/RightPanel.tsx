@@ -6,7 +6,7 @@ import { LayersPanel } from './LayersPannel'
 const PANEL_MIN = 80    // minimum height for each panel when open
 const DEFAULT_SPLIT = 260 // default layers panel height in px
 
-export function RightPanel() {
+export function RightPanel({ canvasWidth, canvasHeight }: { canvasWidth: number; canvasHeight: number }) {
   const [layersHeight, setLayersHeight] = useState(DEFAULT_SPLIT)
   const containerRef = useRef<HTMLDivElement>(null)
   const dragging = useRef(false)
@@ -54,7 +54,7 @@ export function RightPanel() {
         <div className={styles.resizeDots} />
       </div>
 
-      <PropertiesPanel />
+      <PropertiesPanel canvasWidth={canvasWidth} canvasHeight={canvasHeight} />
     </aside>
   )
 }

@@ -76,7 +76,12 @@ export default function App() {
       </header>
 
       <div className={styles.body}>
-        <LeftPanel activeTool={activeTool} onToolChange={setActiveTool} />
+        <LeftPanel 
+          activeTool={activeTool}
+          onToolChange={setActiveTool}
+          canvasWidth={template.canvas.width}
+          canvasHeight={template.canvas.height}
+        />
 
         <EditorCanvas
           ref={canvasRef}
@@ -87,7 +92,10 @@ export default function App() {
           stageRef={stageRef}
         />
 
-        <RightPanel />
+        <RightPanel
+          canvasWidth={template.canvas.width}
+          canvasHeight={template.canvas.height}
+        />
       </div>
     </div>
   )

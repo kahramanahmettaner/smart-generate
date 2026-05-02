@@ -251,3 +251,54 @@
 .caretClosed {
   transform: rotate(-90deg);
 }
+
+.imageSourceSection {
+  margin-bottom: $space-2;
+}
+
+.imageSourceInfo {
+  display: flex;
+  align-items: center;
+  gap: $space-2;
+  flex: 1;
+  overflow: hidden;
+}
+
+.imageSourceIcon {
+  font-size: 20px;
+  color: var(--color-text-tertiary);
+  flex-shrink: 0;
+}
+
+.imageSourceDims {
+  display: block;
+  font-size: $font-size-xs;
+  color: var(--color-text-tertiary);
+  margin-top: 1px;
+}
+
+.setImageBtn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: $space-2;
+  padding: $space-3;
+  border: 1.5px dashed var(--color-border-strong);
+  border-radius: $radius-lg;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: var(--color-text-secondary);
+  transition: all $transition-fast;
+  margin-bottom: $space-2;
+
+  &:hover {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+    background: var(--color-accent-subtle);
+  }
+}
+
+.setImageIcon {
+  font-size: 18px;
+}

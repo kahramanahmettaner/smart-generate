@@ -1,0 +1,237 @@
+@use '../../styles/variables' as *;
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal {
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border-default);
+  border-radius: $radius-xl;
+  width: 560px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: var(--shadow-lg);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $space-3 $space-4;
+  border-bottom: 1px solid var(--color-border-subtle);
+  flex-shrink: 0;
+}
+
+.title {
+  font-size: $font-size-base;
+  font-weight: $font-weight-medium;
+  color: var(--color-text-primary);
+}
+
+.closeBtn {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: $radius-md;
+  font-size: $font-size-sm;
+  color: var(--color-text-tertiary);
+  transition: background $transition-fast, color $transition-fast;
+
+  &:hover {
+    background: var(--color-bg-hover);
+    color: var(--color-text-primary);
+  }
+}
+
+.dropZone {
+  margin: $space-3 $space-4;
+  border: 1.5px dashed var(--color-border-strong);
+  border-radius: $radius-lg;
+  padding: $space-5 $space-4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $space-1;
+  cursor: pointer;
+  transition: border-color $transition-fast, background $transition-fast;
+  flex-shrink: 0;
+
+  &:hover {
+    border-color: var(--color-accent);
+    background: var(--color-accent-subtle);
+  }
+
+  &.dragOver {
+    border-color: var(--color-accent);
+    background: var(--color-accent-subtle);
+  }
+}
+
+.dropIcon {
+  font-size: 22px;
+  color: var(--color-text-tertiary);
+  margin-bottom: $space-1;
+}
+
+.dropText {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: var(--color-text-primary);
+}
+
+.dropHint {
+  font-size: $font-size-xs;
+  color: var(--color-text-tertiary);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: $space-3;
+  padding: 0 $space-4 $space-4;
+  overflow-y: auto;
+}
+
+.assetCard {
+  position: relative;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: $radius-lg;
+  overflow: hidden;
+  cursor: pointer;
+  transition: border-color $transition-fast, box-shadow $transition-fast;
+
+  &:hover {
+    border-color: var(--color-accent);
+    box-shadow: var(--shadow-sm);
+
+    .removeBtn { opacity: 1; }
+  }
+}
+
+.assetThumb {
+  width: 100%;
+  aspect-ratio: 1;
+  background: var(--color-bg-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.assetMeta {
+  padding: $space-2;
+  border-top: 1px solid var(--color-border-subtle);
+  background: var(--color-bg-primary);
+}
+
+.assetName {
+  display: block;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  color: var(--color-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: text;
+}
+
+.assetSize {
+  display: block;
+  font-size: $font-size-xs;
+  color: var(--color-text-tertiary);
+  margin-top: 2px;
+}
+
+.renameInput {
+  width: 100%;
+  font-size: $font-size-xs;
+  padding: 2px $space-1;
+  border: 1px solid var(--color-accent);
+  border-radius: $radius-sm;
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  outline: none;
+}
+
+.removeBtn {
+  position: absolute;
+  top: $space-1;
+  right: $space-1;
+  width: 20px;
+  height: 20px;
+  border-radius: $radius-sm;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border-default);
+  font-size: 10px;
+  color: var(--color-text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity $transition-fast, background $transition-fast;
+
+  &:hover {
+    background: var(--color-danger-subtle);
+    color: var(--color-danger);
+  }
+}
+
+.emptyLibrary {
+  font-size: $font-size-sm;
+  color: var(--color-text-tertiary);
+  text-align: center;
+  padding: $space-6 $space-4;
+}
+
+.sizeOptions {
+  display: flex;
+  align-items: center;
+  gap: $space-3;
+  padding: 0 $space-4 $space-3;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.sizeOptionsLabel {
+  font-size: $font-size-xs;
+  color: var(--color-text-tertiary);
+  flex-shrink: 0;
+}
+
+.checkboxLabel {
+  display: flex;
+  align-items: center;
+  gap: $space-1;
+  font-size: $font-size-sm;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  user-select: none;
+
+  input[type='checkbox'] {
+    accent-color: var(--color-accent);
+    width: 14px;
+    height: 14px;
+    cursor: pointer;
+  }
+
+  &:hover {
+    color: var(--color-text-primary);
+  }
+}

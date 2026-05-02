@@ -1,7 +1,10 @@
 import styles from './PropertiesPanel.module.scss'
 import { useEditorStore } from '../../store/useEditorStore'
-import type { Element, RectElement, TextElement } from '../../types/template'
+import type { Element, ImageElement, RectElement, TextElement } from '../../types/template'
 import { useState } from 'react';
+import { useAssetStore } from '../../store/useAssetStore';
+import type { ImageAsset } from '../../types/asset';
+import { AssetPickerModal } from '../AssetPicker/AssetPickerModal';
 
 function PropRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -210,13 +213,112 @@ function TextProperties({ el, onChange }: { el: TextElement; onChange: (c: Parti
   )
 }
 
-export function PropertiesPanel() {
+function ImageProperties({
+  el, onChange, onOpenPicker
+}: {
+  el: ImageElement
+  onChange: (c: Partial<ImageElement>) => void
+  onOpenPicker: () => void
+}) {
+  const { getAsset } = useAssetStore()
+  const src = el.props.src
+
+  const assetName = src.type === 'asset'
+    ? (getAsset(src.assetId)?.name ?? 'Unknown asset')
+    : null
+
+  return (
+    <div className={styles.section}>
+      <p className={styles.sectionTitle}>Image</p>
+
+      {/* Source mode toggle */}
+      <div className={styles.bindingRow}>
+        <span className={styles.propLabel}>Source</span>
+        <button
+          className={`${styles.bindToggle} ${src.type === 'binding' ? styles.bound : ''}`}
+          onClick={() => {
+            if (src.type === 'binding') {
+              onChange({ props: { ...el.props, src: { type: 'none' } } })
+            } else {
+              onChange({ props: { ...el.props, src: { type: 'binding', column: '' } } })
+            }
+          }}
+        >
+          {src.type === 'binding' ? '✕ Unbind' : '{ } Bind'}
+        </button>
+      </div>
+
+      {src.type !== 'binding' && (
+        <div className={styles.imageSourceSection}>
+          {src.type === 'asset' ? (
+            <div className={styles.imageSourceRow}>
+              <div className={styles.imageSourceInfo}>
+                <span className={styles.imageSourceIcon}>⬚</span>
+                <div>
+                  <span className={styles.imageSourceName}>{assetName}</span>
+                  <span className={styles.imageSourceDims}>
+                    {getAsset((src as any).assetId)?.width} × {getAsset((src as any).assetId)?.height}px
+                  </span>
+                </div>
+              </div>
+              <button className={styles.changeImageBtn} onClick={onOpenPicker}>
+                Change
+              </button>
+            </div>
+          ) : (
+            <button className={styles.setImageBtn} onClick={onOpenPicker}>
+              <span className={styles.setImageIcon}>⬚</span>
+              <span>Set image</span>
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Fit mode */}
+      <PropRow label="Fit">
+        <select
+          className={styles.select}
+          value={el.props.fit}
+          onChange={(e) => onChange({
+            props: { ...el.props, fit: e.target.value as 'cover' | 'contain' | 'fill' }
+          })}
+        >
+          <option value="cover">Cover</option>
+          <option value="contain">Contain</option>
+          <option value="fill">Fill</option>
+        </select>
+      </PropRow>
+    </div>
+  )
+}
+
+type Props = {
+  canvasWidth: number
+  canvasHeight: number
+}
+
+export function PropertiesPanel({ canvasWidth, canvasHeight }: Props) {
   const [collapsed, setCollapsed] = useState(false)
+  const [showPicker,   setShowPicker]   = useState(false)
   const { template, selectedId, updateElement } = useEditorStore()
   const selected = template.elements.find((el) => el.id === selectedId)
 
   const onChange = (changes: Partial<Element>) => {
     if (selected) updateElement(selected.id, changes)
+  }
+
+  const handleAssetSelect = (asset: ImageAsset, dims: { width: number; height: number }) => {
+    if (selected?.type === 'image') {
+      onChange({
+        width:  dims.width,
+        height: dims.height,
+        props: {
+          ...(selected as ImageElement).props,
+          src: { type: 'asset', assetId: asset.id }
+        }
+      } as any)
+    }
+    setShowPicker(false)
   }
 
   return (
@@ -252,7 +354,23 @@ export function PropertiesPanel() {
               {selected.type === 'text' && (
                 <TextProperties el={selected} onChange={(c) => onChange(c as Partial<Element>)} />
               )}
+              {selected?.type === 'image' && (
+                <ImageProperties
+                  el={selected as ImageElement}
+                  onChange={(c) => onChange(c as Partial<Element>)}
+                  onOpenPicker={() => setShowPicker(true)}
+                />
+              )}
             </div>
+          )}
+
+          {showPicker && (
+            <AssetPickerModal
+              onSelect={handleAssetSelect}
+              onClose={() => setShowPicker(false)}
+              canvasWidth={canvasWidth}
+              canvasHeight={canvasHeight}
+            />
           )}
         </>
       )}
