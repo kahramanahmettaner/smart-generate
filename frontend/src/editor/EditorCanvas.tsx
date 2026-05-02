@@ -212,7 +212,7 @@ export const EditorCanvas = forwardRef<EditorCanvasHandle, Props>(function Edito
 
       <div className={styles.zoomWidget}>
         <button className={styles.zoomBtn} onClick={zoomOut} title="Zoom out (Ctrl+2)">−</button>
-        <button className={styles.zoomValue} onClick={zoomReset} title="Reset to 100% (Ctrl+0)">
+        <button className={styles.zoomValue} onClick={zoomReset} title="Reset to 100% (Ctrl+1)">
           {Math.round(zoom * 100)}%
         </button>
         <button className={styles.zoomBtn} onClick={zoomIn} title="Zoom in (Ctrl+8)">+</button>
