@@ -1,6 +1,6 @@
 import { Image, Rect, Text, Group } from 'react-konva'
 import { useEffect, useState } from 'react'
-import type { ImageElement } from '../../types/template'
+import type { ImageAlign, ImageElement } from '../../types/template'
 import type { ImageAsset } from '../../types/asset'
 import { useAssetStore } from '../../store/useAssetStore'
 
@@ -27,49 +27,71 @@ function resolveSrc(
 function getCropProps(
   imgW: number, imgH: number,
   boxW: number, boxH: number,
-  fit: 'cover' | 'contain' | 'fill'
+  fit:   'cover' | 'contain' | 'fill',
+  align: ImageAlign = { horizontal: 'center', vertical: 'center' }
 ): {
   cropX: number; cropY: number
   cropWidth: number; cropHeight: number
   x: number; y: number
   width: number; height: number
 } {
-  // Guard against invalid dimensions — return safe fallback
   if (!imgW || !imgH || !boxW || !boxH ||
       isNaN(imgW) || isNaN(imgH) || isNaN(boxW) || isNaN(boxH)) {
-    return { cropX: 0, cropY: 0, cropWidth: imgW || 1, cropHeight: imgH || 1, x: 0, y: 0, width: boxW || 1, height: boxH || 1 }
+    return { cropX: 0, cropY: 0, cropWidth: imgW || 1, cropHeight: imgH || 1,
+             x: 0, y: 0, width: boxW || 1, height: boxH || 1 }
   }
 
   if (fit === 'fill') {
-    return { cropX: 0, cropY: 0, cropWidth: imgW, cropHeight: imgH, x: 0, y: 0, width: boxW, height: boxH }
+    return { cropX: 0, cropY: 0, cropWidth: imgW, cropHeight: imgH,
+             x: 0, y: 0, width: boxW, height: boxH }
   }
 
   const imgRatio = imgW / imgH
   const boxRatio = boxW / boxH
 
+  // Horizontal offset helper
+  const hOffset = (total: number, used: number) => {
+    if (align.horizontal === 'left')   return 0
+    if (align.horizontal === 'right')  return total - used
+    return (total - used) / 2  // center
+  }
+
+  // Vertical offset helper
+  const vOffset = (total: number, used: number) => {
+    if (align.vertical === 'top')    return 0
+    if (align.vertical === 'bottom') return total - used
+    return (total - used) / 2  // center
+  }
+
   if (fit === 'cover') {
     if (imgRatio > boxRatio) {
+      // Wider image — crop left/right based on horizontal align
       const cropH = imgH
       const cropW = imgH * boxRatio
-      const cropX = (imgW - cropW) / 2
-      return { cropX, cropY: 0, cropWidth: cropW, cropHeight: cropH, x: 0, y: 0, width: boxW, height: boxH }
+      const cropX = hOffset(imgW, cropW)
+      return { cropX, cropY: 0, cropWidth: cropW, cropHeight: cropH,
+               x: 0, y: 0, width: boxW, height: boxH }
     } else {
+      // Taller image — crop top/bottom based on vertical align
       const cropW = imgW
       const cropH = imgW / boxRatio
-      const cropY = (imgH - cropH) / 2
-      return { cropX: 0, cropY, cropWidth: cropW, cropHeight: cropH, x: 0, y: 0, width: boxW, height: boxH }
+      const cropY = vOffset(imgH, cropH)
+      return { cropX: 0, cropY, cropWidth: cropW, cropHeight: cropH,
+               x: 0, y: 0, width: boxW, height: boxH }
     }
   }
 
-  // contain
+  // contain — letterbox with alignment
   if (imgRatio > boxRatio) {
     const renderH = boxW / imgRatio
-    const offsetY = (boxH - renderH) / 2
-    return { cropX: 0, cropY: 0, cropWidth: imgW, cropHeight: imgH, x: 0, y: offsetY, width: boxW, height: renderH }
+    const offsetY = vOffset(boxH, renderH)
+    return { cropX: 0, cropY: 0, cropWidth: imgW, cropHeight: imgH,
+             x: 0, y: offsetY, width: boxW, height: renderH }
   } else {
     const renderW = boxH * imgRatio
-    const offsetX = (boxW - renderW) / 2
-    return { cropX: 0, cropY: 0, cropWidth: imgW, cropHeight: imgH, x: offsetX, y: 0, width: renderW, height: boxH }
+    const offsetX = hOffset(boxW, renderW)
+    return { cropX: 0, cropY: 0, cropWidth: imgW, cropHeight: imgH,
+             x: offsetX, y: 0, width: renderW, height: boxH }
   }
 }
 
@@ -149,7 +171,8 @@ export function ImageElementRenderer({
     img.naturalHeight,
     element.width,
     element.height,
-    element.props.fit
+    element.props.fit,
+    element.props.align ?? { horizontal: 'center', vertical: 'center' }
   )
 
   return (

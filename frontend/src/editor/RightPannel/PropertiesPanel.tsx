@@ -54,11 +54,33 @@ function ColorInput({ value, onChange }: { value: string; onChange: (v: string) 
   )
 }
 
-function TransformSection({ el, onChange }: { el: Element; onChange: (c: Partial<Element>) => void }) {
+function TransformSection({ el, onChange }: {
+  el: Element
+  onChange: (c: Partial<Element>) => void
+}) {
+  const ratio = el.width / el.height
+
+  const handleWidthChange = (w: number) => {
+    if (el.aspectRatioLocked) {
+      onChange({ width: w, height: Math.max(1, Math.round(w / ratio)) } as any)
+    } else {
+      onChange({ width: w } as any)
+    }
+  }
+
+  const handleHeightChange = (h: number) => {
+    if (el.aspectRatioLocked) {
+      onChange({ height: h, width: Math.max(1, Math.round(h * ratio)) } as any)
+    } else {
+      onChange({ height: h } as any)
+    }
+  }
+
   return (
     <div className={styles.section}>
       <p className={styles.sectionTitle}>Transform</p>
 
+      {/* Position */}
       <div className={styles.twoCol}>
         <div>
           <p className={styles.miniLabel}>X</p>
@@ -70,26 +92,43 @@ function TransformSection({ el, onChange }: { el: Element; onChange: (c: Partial
         </div>
       </div>
 
+      {/* Aspect ratio lock */}
+      <label className={styles.checkboxRow}>
+        <input
+          type="checkbox"
+          className={styles.checkbox}
+          checked={el.aspectRatioLocked ?? false}
+          onChange={(e) => onChange({ aspectRatioLocked: e.target.checked } as any)}
+        />
+        <span className={styles.checkboxLabel}>Lock aspect ratio</span>
+      </label>
+
+      {/* Size */}
       <div className={styles.twoCol}>
         <div>
-          <p className={styles.miniLabel}>W</p>
-          <NumericInput value={el.width} min={1} onChange={(v) => onChange({ width: v } as any)} />
+          <p className={styles.miniLabel}>Width</p>
+          <NumericInput value={el.width} min={1} onChange={handleWidthChange} />
         </div>
         <div>
-          <p className={styles.miniLabel}>H</p>
-          <NumericInput value={el.height} min={1} onChange={(v) => onChange({ height: v } as any)} />
+          <p className={styles.miniLabel}>Height</p>
+          <NumericInput value={el.height} min={1} onChange={handleHeightChange} />
         </div>
       </div>
 
+      {/* Rotation + Opacity */}
       <div className={styles.twoCol}>
         <div>
-          <p className={styles.miniLabel}>Rotation</p>
-          <NumericInput value={el.rotation} min={-360} max={360} onChange={(v) => onChange({ rotation: v } as any)} />
+          <p className={styles.miniLabel}>Rotation °</p>
+          <NumericInput value={el.rotation} min={-360} max={360}
+            onChange={(v) => onChange({ rotation: v } as any)} />
         </div>
         <div>
-          <p className={styles.miniLabel}>Opacity</p>
-          <NumericInput value={Math.round(el.opacity * 100)} min={0} max={100}
-            onChange={(v) => onChange({ opacity: v / 100 } as any)} />
+          <p className={styles.miniLabel}>Opacity %</p>
+          <NumericInput
+            value={Math.round(el.opacity * 100)}
+            min={0} max={100}
+            onChange={(v) => onChange({ opacity: v / 100 } as any)}
+          />
         </div>
       </div>
     </div>
@@ -213,81 +252,163 @@ function TextProperties({ el, onChange }: { el: TextElement; onChange: (c: Parti
   )
 }
 
-function ImageProperties({
-  el, onChange, onOpenPicker
-}: {
+function ImageAlignControls({ el, onChange }: {
+  el: ImageElement
+  onChange: (c: Partial<ImageElement>) => void
+}) {
+  const align = el.props.align ?? { horizontal: 'center', vertical: 'center' }
+
+  // 3x3 grid of positions
+  const positions: Array<{
+    h: 'left' | 'center' | 'right'
+    v: 'top'  | 'center' | 'bottom'
+  }> = [
+    { h: 'left',   v: 'top'    },
+    { h: 'center', v: 'top'    },
+    { h: 'right',  v: 'top'    },
+    { h: 'left',   v: 'center' },
+    { h: 'center', v: 'center' },
+    { h: 'right',  v: 'center' },
+    { h: 'left',   v: 'bottom' },
+    { h: 'center', v: 'bottom' },
+    { h: 'right',  v: 'bottom' },
+  ]
+
+  return (
+    <div className={styles.alignBlock}>
+      <p className={styles.miniLabel} style={{ marginBottom: 6 }}>Position</p>
+      <div className={styles.alignGrid}>
+        {positions.map(({ h, v }) => {
+          const active = align.horizontal === h && align.vertical === v
+          return (
+            <button
+              key={`${h}-${v}`}
+              className={`${styles.alignDot} ${active ? styles.alignDotActive : ''}`}
+              onClick={() => onChange({
+                props: { ...el.props, align: { horizontal: h, vertical: v } }
+              })}
+              title={`${v} ${h}`}
+            />
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+function ImageProperties({ el, onChange, onOpenPicker }: {
   el: ImageElement
   onChange: (c: Partial<ImageElement>) => void
   onOpenPicker: () => void
 }) {
   const { getAsset } = useAssetStore()
-  const src = el.props.src
-
-  const assetName = src.type === 'asset'
-    ? (getAsset(src.assetId)?.name ?? 'Unknown asset')
-    : null
+  const src          = el.props.src
+  const asset        = src.type === 'asset' ? getAsset(src.assetId) : null
 
   return (
     <div className={styles.section}>
       <p className={styles.sectionTitle}>Image</p>
 
-      {/* Source mode toggle */}
-      <div className={styles.bindingRow}>
-        <span className={styles.propLabel}>Source</span>
+      {/* Source type toggle */}
+      <div className={styles.segmentedControl}>
         <button
-          className={`${styles.bindToggle} ${src.type === 'binding' ? styles.bound : ''}`}
+          className={`${styles.segmentBtn} ${src.type !== 'binding' ? styles.segmentActive : ''}`}
           onClick={() => {
             if (src.type === 'binding') {
               onChange({ props: { ...el.props, src: { type: 'none' } } })
-            } else {
+            }
+          }}
+        >
+          Asset
+        </button>
+        <button
+          className={`${styles.segmentBtn} ${src.type === 'binding' ? styles.segmentActive : ''}`}
+          onClick={() => {
+            if (src.type !== 'binding') {
               onChange({ props: { ...el.props, src: { type: 'binding', column: '' } } })
             }
           }}
         >
-          {src.type === 'binding' ? '✕ Unbind' : '{ } Bind'}
+          {'{ } Column'}
         </button>
       </div>
 
+      {/* Binding column input */}
+      {src.type === 'binding' && (
+        <input
+          type="text"
+          className={`${styles.input} ${styles.inputFull}`}
+          placeholder="dataset column name"
+          value={src.column}
+          onChange={(e) => onChange({
+            props: { ...el.props, src: { type: 'binding', column: e.target.value } }
+          })}
+        />
+      )}
+
+      {/* Asset source */}
       {src.type !== 'binding' && (
-        <div className={styles.imageSourceSection}>
-          {src.type === 'asset' ? (
-            <div className={styles.imageSourceRow}>
-              <div className={styles.imageSourceInfo}>
-                <span className={styles.imageSourceIcon}>⬚</span>
-                <div>
-                  <span className={styles.imageSourceName}>{assetName}</span>
-                  <span className={styles.imageSourceDims}>
-                    {getAsset((src as any).assetId)?.width} × {getAsset((src as any).assetId)?.height}px
-                  </span>
-                </div>
+        <div className={styles.imageSourceBlock}>
+          {asset ? (
+            <div className={styles.imageSourceSet}>
+              <span className={styles.imageAssetName} title={asset.name}>
+                {asset.name}
+              </span>
+              <span className={styles.imageAssetDims}>
+                {asset.width}×{asset.height}
+              </span>
+              <div className={styles.imageSourceBtns}>
+                <button
+                  className={styles.imageSourceBtn}
+                  onClick={onOpenPicker}
+                  title="Change image"
+                >
+                  Change
+                </button>
+                <button
+                  className={`${styles.imageSourceBtn} ${styles.imageSourceBtnDanger}`}
+                  onClick={() => onChange({
+                    props: { ...el.props, src: { type: 'none' } }
+                  })}
+                  title="Remove image"
+                >
+                  Remove
+                </button>
               </div>
-              <button className={styles.changeImageBtn} onClick={onOpenPicker}>
-                Change
-              </button>
             </div>
           ) : (
             <button className={styles.setImageBtn} onClick={onOpenPicker}>
-              <span className={styles.setImageIcon}>⬚</span>
-              <span>Set image</span>
+              + Set image
             </button>
           )}
         </div>
       )}
 
-      {/* Fit mode */}
-      <PropRow label="Fit">
-        <select
-          className={styles.select}
-          value={el.props.fit}
-          onChange={(e) => onChange({
-            props: { ...el.props, fit: e.target.value as 'cover' | 'contain' | 'fill' }
-          })}
-        >
-          <option value="cover">Cover</option>
-          <option value="contain">Contain</option>
-          <option value="fill">Fill</option>
-        </select>
-      </PropRow>
+      {/* Fit — only when asset is set */}
+      {src.type === 'asset' && (
+        <>
+          <div className={styles.propRow} style={{ marginTop: 8 }}>
+            <span className={styles.propLabel}>Fit</span>
+            <div className={styles.propControl}>
+              <select
+                className={styles.select}
+                value={el.props.fit}
+                onChange={(e) => onChange({
+                  props: { ...el.props, fit: e.target.value as 'cover' | 'contain' | 'fill' }
+                })}
+              >
+                <option value="cover">Cover</option>
+                <option value="contain">Contain</option>
+                <option value="fill">Fill</option>
+              </select>
+            </div>
+          </div>
+
+          {(el.props.fit === 'cover' || el.props.fit === 'contain') && (
+            <ImageAlignControls el={el} onChange={onChange} />
+          )}
+        </>
+      )}
     </div>
   )
 }

@@ -38,7 +38,8 @@ export function LeftPanel({ activeTool, onToolChange, canvasWidth, canvasHeight 
         width: 200, height: 150,
         rotation: 0, opacity: 1,
         visible: true, locked: false,
-        props: { fill: '#E0E7FF', stroke: '#6366F1', strokeWidth: 2, cornerRadius: 4 }
+        props: { fill: '#E0E7FF', stroke: '#6366F1', strokeWidth: 2, cornerRadius: 4 },
+        aspectRatioLocked: false,
       }
       addElement(el)
       selectElement(el.id)
@@ -58,7 +59,8 @@ export function LeftPanel({ activeTool, onToolChange, canvasWidth, canvasHeight 
           fontSize: 24, fontFamily: 'Inter',
           color: '#111111', fontWeight: 'normal',
           align: 'left', lineHeight: 1.4,
-        }
+        },
+        aspectRatioLocked: false,
       }
       addElement(el)
       selectElement(el.id)
@@ -74,7 +76,12 @@ export function LeftPanel({ activeTool, onToolChange, canvasWidth, canvasHeight 
         width: 300, height: 200,
         rotation: 0, opacity: 1,
         visible: true, locked: false,
-        props: { src: { type: 'none' }, fit: 'cover' }
+        props: {
+          src:   { type: 'none' },
+          fit:   'cover',
+          align: { horizontal: 'center', vertical: 'center' }
+        },
+        aspectRatioLocked: false,
       }
       addElement(el)
       selectElement(el.id)

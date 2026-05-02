@@ -32,6 +32,7 @@ export type BaseElement = {
   opacity: number
   visible: boolean
   locked: boolean
+  aspectRatioLocked: boolean
 }
 
 export type RectElement = BaseElement & {
@@ -62,6 +63,7 @@ export type ImageElement = BaseElement & {
   props: {
     src: ImageSrc
     fit: 'cover' | 'contain' | 'fill'
+    align: ImageAlign
   }
 }
 
@@ -81,4 +83,9 @@ export type Template = {
   name: string
   canvas: CanvasConfig
   elements: Element[]
+}
+
+export type ImageAlign = {
+  horizontal: 'left' | 'center' | 'right'
+  vertical:   'top'  | 'center' | 'bottom'
 }

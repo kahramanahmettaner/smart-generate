@@ -302,3 +302,196 @@
 .setImageIcon {
   font-size: 18px;
 }
+
+// Checkbox row — used for aspect ratio lock
+.checkboxRow {
+  display: flex;
+  align-items: center;
+  gap: $space-2;
+  padding: $space-1 0 $space-2;
+  cursor: pointer;
+  user-select: none;
+
+  &:hover .checkboxLabel {
+    color: var(--color-text-primary);
+  }
+}
+
+.checkbox {
+  width: 13px;
+  height: 13px;
+  accent-color: var(--color-accent);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.checkboxLabel {
+  font-size: $font-size-sm;
+  color: var(--color-text-secondary);
+  transition: color $transition-fast;
+}
+
+// Segmented control — Asset / Column toggle
+.segmentedControl {
+  display: flex;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border-default);
+  border-radius: $radius-md;
+  padding: 2px;
+  gap: 2px;
+  margin-bottom: $space-2;
+}
+
+.segmentBtn {
+  flex: 1;
+  height: 24px;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  border-radius: calc($radius-md - 2px);
+  color: var(--color-text-secondary);
+  transition: all $transition-fast;
+
+  &:hover {
+    color: var(--color-text-primary);
+  }
+
+  &.segmentActive {
+    background: var(--color-bg-primary);
+    color: var(--color-text-primary);
+    box-shadow: var(--shadow-sm);
+  }
+}
+
+// Image source block
+.imageSourceBlock {
+  margin-bottom: $space-2;
+}
+
+.imageSourceSet {
+  display: flex;
+  flex-direction: column;
+  gap: $space-1;
+  padding: $space-2;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: $radius-md;
+}
+
+.imageAssetName {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: var(--color-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.imageAssetDims {
+  font-size: $font-size-xs;
+  color: var(--color-text-tertiary);
+}
+
+.imageSourceBtns {
+  display: flex;
+  gap: $space-1;
+  margin-top: $space-1;
+}
+
+.imageSourceBtn {
+  flex: 1;
+  height: 26px;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  border: 1px solid var(--color-border-default);
+  border-radius: $radius-md;
+  color: var(--color-text-secondary);
+  background: var(--color-bg-primary);
+  transition: all $transition-fast;
+
+  &:hover {
+    background: var(--color-bg-hover);
+    color: var(--color-text-primary);
+    border-color: var(--color-border-strong);
+  }
+
+  &.imageSourceBtnDanger:hover {
+    background: var(--color-danger-subtle);
+    color: var(--color-danger);
+    border-color: var(--color-danger);
+  }
+}
+
+.setImageBtn {
+  width: 100%;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: var(--color-text-secondary);
+  border: 1.5px dashed var(--color-border-strong);
+  border-radius: $radius-md;
+  transition: all $transition-fast;
+
+  &:hover {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+    background: var(--color-accent-subtle);
+  }
+}
+
+// 3x3 alignment grid
+.alignBlock {
+  margin-top: $space-3;
+}
+
+.alignGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 24px);
+  grid-template-rows: repeat(3, 24px);
+  gap: 3px;
+}
+
+.alignDot {
+  width: 24px;
+  height: 24px;
+  border-radius: $radius-sm;
+  border: 1px solid var(--color-border-default);
+  background: var(--color-bg-secondary);
+  position: relative;
+  transition: all $transition-fast;
+
+  // Inner dot
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 50%;
+    transform: translate(-50%, -50%);
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--color-text-tertiary);
+    transition: all $transition-fast;
+  }
+
+  &:hover {
+    background: var(--color-bg-hover);
+    border-color: var(--color-border-strong);
+
+    &::after {
+      background: var(--color-text-secondary);
+    }
+  }
+
+  &.alignDotActive {
+    background: var(--color-accent-subtle);
+    border-color: var(--color-accent);
+
+    &::after {
+      background: var(--color-accent);
+      width: 7px;
+      height: 7px;
+    }
+  }
+}
