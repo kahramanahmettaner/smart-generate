@@ -236,7 +236,15 @@ export function PropertiesPanel() {
           {!selected ? (
             <p className={styles.empty}>Select an element to edit its properties</p>
           ) : (
-            <div className={styles.content}>
+            <div 
+              className={styles.content}
+              onKeyDown={(e) => {
+                if (e.key === 'Escape' || e.key === 'Enter') {
+                  (e.target as HTMLElement).blur();
+                  e.stopPropagation();
+                }
+              }}
+              >
               <TransformSection el={selected} onChange={onChange} />
               {selected.type === 'rect' && (
                 <RectProperties el={selected} onChange={(c) => onChange(c as Partial<Element>)} />
