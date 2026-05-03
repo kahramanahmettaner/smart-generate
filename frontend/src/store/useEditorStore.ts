@@ -1,8 +1,9 @@
 import { create } from 'zustand'
 import { temporal } from 'zundo'
 import { generateId } from '../lib/utils'
-import type { Template, Element } from '../types/template'
+import type { Template, Element, ImageSrc, ImageElement } from '../types/template'
 import type { TemplateConfig } from '../components/TemplateConfigModal/TemplateConfigModal'
+import { useAssetStore } from './useAssetStore'
 
 type EditorState = {
   template:   Template
@@ -21,6 +22,7 @@ type EditorState = {
   initTemplate:       (config: TemplateConfig) => void
   loadTemplate:       (template: Template) => void
   exportTemplateJson: () => string
+  syncAssetName:      (oldName: string, newName: string) => void
 }
 
 const defaultTemplate: Template = {
@@ -101,15 +103,39 @@ export const useEditorStore = create<EditorState>()(
           selectedId: null,
         }),
 
-      loadTemplate: (template) =>
-        set({
-          template,
-          selectedId: null,
-        }),
+      // Update loadTemplate to resolve on load:
+      loadTemplate: (template) => {
+        const resolved = resolveAssetIds(template)
+        set({ template: resolved, selectedId: null })
+      },
 
       exportTemplateJson: () => {
         return JSON.stringify(get().template, null, 2)
       },
+
+      syncAssetName: (oldName: string, newName: string) =>
+        set((state) => ({
+          template: {
+            ...state.template,
+            elements: state.template.elements.map((el) => {
+              if (el.type !== 'image') return el
+              const imgEl = el as ImageElement
+              const src   = imgEl.props.src
+
+              if (src.type === 'asset' && src.assetName === oldName) {
+                return { ...imgEl, props: { ...imgEl.props,
+                  src: { ...src, assetName: newName } } }
+              }
+
+              if (src.type === 'binding' && src.placeholder?.assetName === oldName) {
+                return { ...imgEl, props: { ...imgEl.props,
+                  src: { ...src, placeholder: { ...src.placeholder, assetName: newName } } } }
+              }
+
+              return el
+            })
+          }
+        })),
     }),
     {
       limit: 50,
@@ -118,6 +144,51 @@ export const useEditorStore = create<EditorState>()(
     }
   )
 )
+
+// helper — resolves assetIds by name in the loaded template
+function resolveAssetIds(template: Template): Template {
+  const { getAssetByName } = useAssetStore.getState()
+
+  const resolveImageSrc = (src: ImageSrc): ImageSrc => {
+    if (src.type === 'asset') {
+      const local = getAssetByName(src.assetName)
+      if (local) {
+        // Found locally by name — update ID to local ID
+        return { ...src, assetId: local.id }
+      }
+      // Not found — keep reference as-is, will show missing state
+      return src
+    }
+
+    if (src.type === 'binding' && src.placeholder) {
+      const local = getAssetByName(src.placeholder.assetName)
+      if (local) {
+        return {
+          ...src,
+          placeholder: { ...src.placeholder, assetId: local.id }
+        }
+      }
+      return src
+    }
+
+    return src
+  }
+
+  return {
+    ...template,
+    elements: template.elements.map((el) => {
+      if (el.type !== 'image') return el
+      const imgEl = el as ImageElement
+      return {
+        ...imgEl,
+        props: {
+          ...imgEl.props,
+          src: resolveImageSrc(imgEl.props.src)
+        }
+      }
+    })
+  }
+}
 
 // ─── History hook ────────────────────────────────────────────────────────────
 

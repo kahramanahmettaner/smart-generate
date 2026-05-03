@@ -1,52 +1,17 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { ImageAsset } from '../types/asset'
-import { generateId } from '../lib/utils'
+import { generateId, uniqueName } from '../lib/utils'
 
 type AssetStore = {
   assets: Record<string, ImageAsset>
-  addAsset: (file: File) => Promise<ImageAsset>
-  removeAsset: (id: string) => void
-  getAsset: (id: string) => ImageAsset | undefined
-}
-
-// Given image natural dimensions and a canvas size,
-// return element dimensions that fit within the canvas
-// while maintaining aspect ratio
-export function fitDimensions(
-  imgW: number,
-  imgH: number,
-  canvasW: number,
-  canvasH: number,
-  options: {
-    keepOriginalResolution: boolean
-    keepAspectRatio: boolean
-    maxFraction?: number  // max fraction of canvas to occupy (default 0.6)
-  }
-): { width: number; height: number } {
-  if (options.keepOriginalResolution) {
-    return { width: imgW, height: imgH }
-  }
-
-  if (!options.keepAspectRatio) {
-    // Default size — 60% of canvas, ignore aspect ratio
-    return {
-      width:  Math.round(canvasW * (options.maxFraction ?? 0.6)),
-      height: Math.round(canvasH * (options.maxFraction ?? 0.6)),
-    }
-  }
-
-  // Keep aspect ratio, fit within maxFraction of canvas
-  const maxW   = canvasW * (options.maxFraction ?? 0.6)
-  const maxH   = canvasH * (options.maxFraction ?? 0.6)
-  const ratio  = imgW / imgH
-  let w = maxW
-  let h = w / ratio
-  if (h > maxH) {
-    h = maxH
-    w = h * ratio
-  }
-  return { width: Math.round(w), height: Math.round(h) }
+  addAsset:          (file: File) => Promise<ImageAsset>
+  addAssetWithName:  (file: File, name: string) => Promise<ImageAsset>
+  removeAsset:       (id: string) => void
+  renameAsset:       (id: string, name: string) => void
+  getAsset:          (id: string) => ImageAsset | undefined
+  getAssetByName:    (name: string) => ImageAsset | undefined
+  resolveOrAdd:      (file: File, preferredName: string) => Promise<ImageAsset>
 }
 
 export const useAssetStore = create<AssetStore>()(
@@ -55,11 +20,18 @@ export const useAssetStore = create<AssetStore>()(
       assets: {},
 
       addAsset: async (file: File): Promise<ImageAsset> => {
+        const baseName    = fileNameWithoutExtension(file.name)
+        const existingNames = Object.values(get().assets).map((a) => a.name)
+        const name        = uniqueName(baseName, existingNames)
+        return get().addAssetWithName(file, name)
+      },
+
+      addAssetWithName: async (file: File, name: string): Promise<ImageAsset> => {
         const dataUrl = await readFileAsDataUrl(file)
         const dims    = await getImageDimensions(dataUrl)
         const asset: ImageAsset = {
           id:        generateId('ast'),
-          name:      fileNameWithoutExtension(file.name),
+          name,
           dataUrl,
           width:     dims.width,
           height:    dims.height,
@@ -79,11 +51,65 @@ export const useAssetStore = create<AssetStore>()(
           return { assets: next }
         }),
 
+      renameAsset: (id, newName) => {
+        const existingNames = Object.values(get().assets)
+          .filter((a) => a.id !== id)
+          .map((a) => a.name)
+        const safeName = uniqueName(newName, existingNames)
+        set((state) => ({
+          assets: {
+            ...state.assets,
+            [id]: { ...state.assets[id], name: safeName }
+          }
+        }))
+      },
+
       getAsset: (id) => get().assets[id],
+
+      getAssetByName: (name) =>
+        Object.values(get().assets).find((a) => a.name === name),
+
+      // Used during template import:
+      // If an asset with this name already exists locally, return it.
+      // Otherwise add the file under this name (with dedup if needed).
+      resolveOrAdd: async (file: File, preferredName: string): Promise<ImageAsset> => {
+        const existing = get().getAssetByName(preferredName)
+        if (existing) return existing
+        return get().addAssetWithName(file, preferredName)
+      },
     }),
     { name: 'imagio-assets' }
   )
 )
+
+// ─── Helpers ────────────────────────────────────────────────────────────────
+
+export function fitDimensions(
+  imgW: number, imgH: number,
+  canvasW: number, canvasH: number,
+  options: {
+    keepOriginalResolution: boolean
+    keepAspectRatio:        boolean
+    maxFraction?:           number
+  }
+): { width: number; height: number } {
+  if (options.keepOriginalResolution) {
+    return { width: imgW, height: imgH }
+  }
+  if (!options.keepAspectRatio) {
+    return {
+      width:  Math.round(canvasW * (options.maxFraction ?? 0.6)),
+      height: Math.round(canvasH * (options.maxFraction ?? 0.6)),
+    }
+  }
+  const maxW  = canvasW * (options.maxFraction ?? 0.6)
+  const maxH  = canvasH * (options.maxFraction ?? 0.6)
+  const ratio = imgW / imgH
+  let w = maxW
+  let h = w / ratio
+  if (h > maxH) { h = maxH; w = h * ratio }
+  return { width: Math.round(w), height: Math.round(h) }
+}
 
 function readFileAsDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {

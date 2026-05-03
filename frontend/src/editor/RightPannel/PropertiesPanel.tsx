@@ -303,19 +303,25 @@ function ImageProperties({ el, onChange, onOpenPicker }: {
   onChange: (c: Partial<ImageElement>) => void
   onOpenPicker: (target: 'main' | 'placeholder') => void
 }) {
-  const { getAsset } = useAssetStore()
+  const { getAsset }             = useAssetStore()
   const { confirm, dialogProps } = useConfirm()
-  const src          = el.props.src
-  const isBinding    = src.type === 'binding'
+  const src                      = el.props.src
+  const isBinding                = src.type === 'binding'
 
-  // Resolve assets for display
   const mainAsset = src.type === 'asset'
     ? getAsset(src.assetId)
     : null
 
+  // Asset ID is set but not found in local store
+  const isMainMissing = src.type === 'asset' && !mainAsset
+
   const placeholderAsset = src.type === 'binding' && src.placeholder
     ? getAsset(src.placeholder.assetId)
     : null
+
+  const isPlaceholderMissing = src.type === 'binding'
+    && src.placeholder
+    && !placeholderAsset
 
   const switchToBinding = async () => {
     if (src.type === 'asset' && src.assetId) {
@@ -376,7 +382,40 @@ function ImageProperties({ el, onChange, onOpenPicker }: {
         {/* ── Asset mode ── */}
         {!isBinding && (
           <div className={styles.imageSourceBlock}>
-            {mainAsset ? (
+            {isMainMissing ? (
+              // Reference exists but asset not in local store
+              <div className={styles.missingAssetBlock}>
+                <div className={styles.missingAssetInfo}>
+                  <span className={styles.missingIcon}>⚠</span>
+                  <div>
+                    <p className={styles.missingTitle}>Image not found</p>
+                    <p className={styles.missingDesc}>
+                      This image was set but is not in your local library.
+                      Import it to restore it.
+                    </p>
+                    <code className={styles.missingId}>
+                      {(src as any).assetName}
+                    </code>
+                  </div>
+                </div>
+                <div className={styles.imageSourceBtns}>
+                  <button
+                    className={styles.imageSourceBtn}
+                    onClick={() => onOpenPicker('main')}
+                  >
+                    Import image
+                  </button>
+                  <button
+                    className={`${styles.imageSourceBtn} ${styles.imageSourceBtnDanger}`}
+                    onClick={() => onChange({
+                      props: { ...el.props, src: { type: 'none' } }
+                    })}
+                  >
+                    Clear
+                  </button>
+                </div>
+              </div>
+            ) : mainAsset ? (
               <div className={styles.imageSourceSet}>
                 <span className={styles.imageAssetName} title={mainAsset.name}>
                   {mainAsset.name}
@@ -415,8 +454,6 @@ function ImageProperties({ el, onChange, onOpenPicker }: {
         {/* ── Binding mode ── */}
         {isBinding && src.type === 'binding' && (
           <div className={styles.bindingBlock}>
-
-            {/* Column name */}
             <div className={styles.bindingFieldGroup}>
               <p className={styles.miniLabel}>Dataset column</p>
               <input
@@ -425,10 +462,7 @@ function ImageProperties({ el, onChange, onOpenPicker }: {
                 placeholder="e.g. product_image"
                 value={src.column}
                 onChange={(e) => onChange({
-                  props: {
-                    ...el.props,
-                    src: { ...src, column: e.target.value }
-                  }
+                  props: { ...el.props, src: { ...src, column: e.target.value } }
                 })}
               />
               {src.column.trim() && (
@@ -438,18 +472,43 @@ function ImageProperties({ el, onChange, onOpenPicker }: {
               )}
             </div>
 
-            {/* Placeholder */}
             <div className={styles.bindingFieldGroup}>
               <div className={styles.bindingPlaceholderHeader}>
                 <p className={styles.miniLabel}>Preview placeholder</p>
                 <span className={styles.bindingPlaceholderHint}>editor only</span>
               </div>
 
-              {placeholderAsset ? (
+              {isPlaceholderMissing ? (
+                <div className={styles.missingAssetBlock}>
+                  <div className={styles.missingAssetInfo}>
+                    <span className={styles.missingIcon}>⚠</span>
+                    <div>
+                      <p className={styles.missingTitle}>Placeholder not found</p>
+                      <p className={styles.missingDesc}>
+                        Import the image to restore this placeholder.
+                      </p>
+                    </div>
+                  </div>
+                  <div className={styles.imageSourceBtns}>
+                    <button
+                      className={styles.imageSourceBtn}
+                      onClick={() => onOpenPicker('placeholder')}
+                    >
+                      Import image
+                    </button>
+                    <button
+                      className={`${styles.imageSourceBtn} ${styles.imageSourceBtnDanger}`}
+                      onClick={() => onChange({
+                        props: { ...el.props, src: { ...src, placeholder: undefined } }
+                      })}
+                    >
+                      Clear
+                    </button>
+                  </div>
+                </div>
+              ) : placeholderAsset ? (
                 <div className={styles.imageSourceSet}>
-                  <span className={styles.imageAssetName} title={placeholderAsset.name}>
-                    {placeholderAsset.name}
-                  </span>
+                  <span className={styles.imageAssetName}>{placeholderAsset.name}</span>
                   <span className={styles.imageAssetDims}>
                     {placeholderAsset.width} × {placeholderAsset.height}px
                   </span>
@@ -463,10 +522,7 @@ function ImageProperties({ el, onChange, onOpenPicker }: {
                     <button
                       className={`${styles.imageSourceBtn} ${styles.imageSourceBtnDanger}`}
                       onClick={() => onChange({
-                        props: {
-                          ...el.props,
-                          src: { ...src, placeholder: undefined }
-                        }
+                        props: { ...el.props, src: { ...src, placeholder: undefined } }
                       })}
                     >
                       Remove
@@ -485,7 +541,7 @@ function ImageProperties({ el, onChange, onOpenPicker }: {
           </div>
         )}
 
-        {/* ── Fit + Alignment — always visible for both modes ── */}
+        {/* Fit + Alignment — always visible */}
         <div className={styles.propRow} style={{ marginTop: 8 }}>
           <span className={styles.propLabel}>Fit</span>
           <div className={styles.propControl}>
@@ -493,10 +549,7 @@ function ImageProperties({ el, onChange, onOpenPicker }: {
               className={styles.select}
               value={el.props.fit}
               onChange={(e) => onChange({
-                props: {
-                  ...el.props,
-                  fit: e.target.value as 'cover' | 'contain' | 'fill'
-                }
+                props: { ...el.props, fit: e.target.value as any }
               })}
             >
               <option value="cover">Cover</option>
@@ -511,7 +564,6 @@ function ImageProperties({ el, onChange, onOpenPicker }: {
         )}
       </div>
 
-      {/* Confirmation dialog */}
       {dialogProps && <ConfirmDialog {...dialogProps} />}
     </>
   )
@@ -522,10 +574,7 @@ type Props = {
   canvasHeight: number
 }
 
-export function PropertiesPanel({ canvasWidth, canvasHeight }: {
-  canvasWidth: number
-  canvasHeight: number
-}) {
+export function PropertiesPanel({ canvasWidth, canvasHeight }: Props) {
   const [collapsed,    setCollapsed]    = useState(false)
   const [pickerTarget, setPickerTarget] = useState<'main' | 'placeholder' | null>(null)
 
@@ -538,7 +587,6 @@ export function PropertiesPanel({ canvasWidth, canvasHeight }: {
 
   const handleAssetSelect = (asset: ImageAsset, dims: { width: number; height: number }) => {
     if (!selected || selected.type !== 'image') return
-
     const el  = selected as ImageElement
     const src = el.props.src
 
@@ -548,7 +596,7 @@ export function PropertiesPanel({ canvasWidth, canvasHeight }: {
         height: dims.height,
         props: {
           ...el.props,
-          src: { type: 'asset', assetId: asset.id }
+          src: { type: 'asset', assetId: asset.id, assetName: asset.name }
         }
       } as any)
     }
@@ -559,11 +607,10 @@ export function PropertiesPanel({ canvasWidth, canvasHeight }: {
           ...el.props,
           src: {
             ...src,
-            placeholder: { assetId: asset.id }
+            placeholder: { assetId: asset.id, assetName: asset.name }
           }
         }
       } as any)
-      // Don't resize element when setting a placeholder
     }
 
     setPickerTarget(null)

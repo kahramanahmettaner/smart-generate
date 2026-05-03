@@ -2,6 +2,7 @@ import { useRef, useState } from 'react'
 import { useAssetStore, fitDimensions } from '../../store/useAssetStore'
 import type { ImageAsset } from '../../types/asset'
 import styles from './AssetPickerModal.module.scss'
+import { useEditorStore } from '../../store/useEditorStore'
 
 type Props = {
   onSelect: (asset: ImageAsset, dims: { width: number; height: number }) => void
@@ -57,12 +58,14 @@ export function AssetPickerModal({ onSelect, onClose, canvasWidth, canvasHeight,
 
   const commitRename = () => {
     if (renamingId && renameValue.trim()) {
-      useAssetStore.setState((state) => ({
-        assets: {
-          ...state.assets,
-          [renamingId]: { ...state.assets[renamingId], name: renameValue.trim() }
-        }
-      }))
+      const oldName = assets[renamingId]?.name
+      const newName = renameValue.trim()
+      useAssetStore.getState().renameAsset(renamingId, newName)
+      // Sync template references
+      const safeName = useAssetStore.getState().assets[renamingId]?.name
+      if (oldName && safeName) {
+        useEditorStore.getState().syncAssetName(oldName, safeName)
+      }
     }
     setRenamingId(null)
   }

@@ -111,109 +111,94 @@ function getCropProps(
   }
 }
 
+type ImageStatus = 'unset' | 'missing' | 'loading' | 'ready'
+
 export function ImageElementRenderer({
   element, isSelected, onSelect, onChange, dataRow
 }: Props) {
   const { getAsset }  = useAssetStore()
   const [img, setImg] = useState<HTMLImageElement | null>(null)
-  const resolvedSrc   = resolveSrc(element.props.src, getAsset, dataRow)
+  const [status, setStatus] = useState<ImageStatus>('unset')
+
+  const resolvedSrc = resolveSrc(element.props.src, getAsset, dataRow)
+
+  // Determine initial status based on src type
+  const expectedSrc = element.props.src
 
   useEffect(() => {
-    if (!resolvedSrc) { setImg(null); return }
+    if (expectedSrc.type === 'none') {
+      setStatus('unset')
+      setImg(null)
+      return
+    }
+
+    if (expectedSrc.type === 'asset') {
+      const asset = getAsset(expectedSrc.assetId)
+      if (!asset) {
+        // Reference exists but asset not in store
+        setStatus('missing')
+        setImg(null)
+        return
+      }
+    }
+
+    if (!resolvedSrc) {
+      setStatus('unset')
+      setImg(null)
+      return
+    }
+
+    setStatus('loading')
     const image       = new window.Image()
     image.crossOrigin = 'anonymous'
     image.src         = resolvedSrc
-    image.onload      = () => setImg(image)
-    image.onerror     = () => setImg(null)
+    image.onload      = () => { setImg(image); setStatus('ready') }
+    image.onerror     = () => { setImg(null);  setStatus('missing') }
     return () => { image.onload = null; image.onerror = null }
-  }, [resolvedSrc])
+  }, [resolvedSrc, expectedSrc, getAsset])
 
-  const sharedDragProps = {
+  const sharedGroupProps = {
+    id:        element.id,
+    x:         element.x,
+    y:         element.y,
+    width:     element.width,
+    height:    element.height,
+    rotation:  element.rotation,
+    opacity:   element.opacity,
+    visible:   element.visible,
     draggable: !element.locked,
+    onClick:   onSelect,
+    onTap:     onSelect,
     onDragEnd: (e: any) => onChange({
       x: Math.round(e.target.x()),
       y: Math.round(e.target.y()),
     } as Partial<ImageElement>),
   }
 
-  // Placeholder
-  if (!img) {
-    return (
-      <Group
-        id={element.id}
-        x={element.x}
-        y={element.y}
-        width={element.width}
-        height={element.height}
-        rotation={element.rotation}
-        opacity={element.opacity}
-        visible={element.visible}
-        onClick={onSelect}
-        onTap={onSelect}
-        {...sharedDragProps}
-      >
-        <Rect
-          width={element.width}
-          height={element.height}
-          fill="#F5F4F2"
-          stroke={isSelected ? '#4A90D9' : '#CCCCCC'}
-          strokeWidth={1.5}
-          dash={[6, 3]}
-        />
-        <Text
-          y={element.height / 2 - 20}
-          width={element.width}
-          text="⬚"
-          fontSize={28}
-          fill="#CCCCCC"
-          align="center"
-          listening={false}
-        />
-        <Text
-          y={element.height / 2 + 14}
-          width={element.width}
-          text={
-            element.props.src.type === 'binding'
-              ? `{{${element.props.src.column || 'column'}}}`
-              : 'no image set'
-          }
-          fontSize={11}
-          fill="#AAAAAA"
-          align="center"
-          listening={false}
-        />
-      </Group>
+  // Ready — render image with fit/align
+  if (status === 'ready' && img) {
+    const crop = getCropProps(
+      img.naturalWidth,
+      img.naturalHeight,
+      element.width,
+      element.height,
+      element.props.fit,
+      element.props.align ?? { horizontal: 'center', vertical: 'center' }
     )
-  }
-
-  const crop = getCropProps(
-    img.naturalWidth,
-    img.naturalHeight,
-    element.width,
-    element.height,
-    element.props.fit,
-    element.props.align ?? { horizontal: 'center', vertical: 'center' }
-  )
-
   return (
     <Group
-      id={element.id}
-      x={element.x}
-      y={element.y}
-      width={element.width}    // ← explicit attrs on the Group
-      height={element.height}  // ← so transformer can read them
-      rotation={element.rotation}
-      opacity={element.opacity}
-      visible={element.visible}
-      onClick={onSelect}
-      onTap={onSelect}
-      {...sharedDragProps}
-      // Clip group to element bounds so contain letterbox doesn't overflow
+      {...sharedGroupProps}
       clipX={0}
       clipY={0}
       clipWidth={element.width}
       clipHeight={element.height}
     >
+      {/* Transparent hit area — makes the whole frame interactable */}
+      <Rect
+        width={element.width}
+        height={element.height}
+        fill="transparent"
+      />
       <Image
         x={crop.x}
         y={crop.y}
@@ -224,7 +209,109 @@ export function ImageElementRenderer({
         cropY={crop.cropY}
         cropWidth={crop.cropWidth}
         cropHeight={crop.cropHeight}
+        listening={false}
       />
     </Group>
   )
+}
+
+  // All non-ready states — placeholder with contextual message
+  const placeholderConfig = getPlaceholderConfig(status, element.props.src)
+
+  // Placeholder state
+  return (
+    <Group {...sharedGroupProps}>
+      <Rect
+        width={element.width}
+        height={element.height}
+        fill={placeholderConfig.fill}
+        stroke={isSelected ? '#4A90D9' : placeholderConfig.stroke}
+        strokeWidth={1.5}
+        dash={placeholderConfig.dash}
+      />
+      <Text
+        y={element.height / 2 - 20}
+        width={element.width}
+        text={placeholderConfig.icon}
+        fontSize={26}
+        fill={placeholderConfig.iconColor}
+        align="center"
+        listening={false}
+      />
+      <Text
+        y={element.height / 2 + 12}
+        width={element.width}
+        text={placeholderConfig.label}
+        fontSize={11}
+        fill={placeholderConfig.labelColor}
+        align="center"
+        listening={false}
+      />
+    </Group>
+  )
+}
+
+// ─── Placeholder appearance per status ──────────────────────────────────────
+
+type PlaceholderConfig = {
+  fill:       string
+  stroke:     string
+  dash:       number[]
+  icon:       string
+  iconColor:  string
+  label:      string
+  labelColor: string
+}
+
+function getPlaceholderConfig(
+  status: ImageStatus,
+  src: ImageElement['props']['src']
+): PlaceholderConfig {
+  if (status === 'missing') {
+    return {
+      fill:       '#FEF2F2',
+      stroke:     '#FCA5A5',
+      dash:       [6, 3],
+      icon:       '⚠',
+      iconColor:  '#EF4444',
+      label:      'image not found',
+      labelColor: '#EF4444',
+    }
+  }
+
+  if (status === 'loading') {
+    return {
+      fill:       '#F5F4F2',
+      stroke:     '#CCCCCC',
+      dash:       [],
+      icon:       '⊙',
+      iconColor:  '#AAAAAA',
+      label:      'loading…',
+      labelColor: '#AAAAAA',
+    }
+  }
+
+  // unset
+  if (src.type === 'binding') {
+    const col = src.type === 'binding' ? src.column : ''
+    return {
+      fill:       '#EEF2FF',
+      stroke:     '#C7D2FE',
+      dash:       [6, 3],
+      icon:       '{ }',
+      iconColor:  '#6366F1',
+      label:      col ? `{{${col}}}` : 'no column set',
+      labelColor: '#6366F1',
+    }
+  }
+
+  return {
+    fill:       '#F5F4F2',
+    stroke:     '#CCCCCC',
+    dash:       [6, 3],
+    icon:       '⬚',
+    iconColor:  '#CCCCCC',
+    label:      'no image set',
+    labelColor: '#AAAAAA',
+  }
 }

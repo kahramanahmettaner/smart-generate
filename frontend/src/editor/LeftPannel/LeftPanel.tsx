@@ -96,7 +96,11 @@ export function LeftPanel({ activeTool, onToolChange, canvasWidth, canvasHeight 
       updateElement(pendingImageId, {
         width:  dims.width,
         height: dims.height,
-        props:  { src: { type: 'asset', assetId: asset.id }, fit: 'cover' }
+        props: {
+          src: { type: 'asset', assetId: asset.id, assetName: asset.name },
+          fit: 'cover',
+          align: { horizontal: 'center', vertical: 'center' },
+        }
       } as any)
     }
     setShowPicker(false)

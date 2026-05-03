@@ -32,10 +32,10 @@ export function Editor() {
     { key: 'Escape',                               handler: () => selectElement(null) },
     { key: 'Delete',                               handler: () => { if (selectedId) deleteElement(selectedId) } },
     { key: 'Backspace',                            handler: () => { if (selectedId) deleteElement(selectedId) } },
-    { key: '=',         meta: true,               handler: () => canvasRef.current?.zoomIn()    },
-    { key: '-',         meta: true,               handler: () => canvasRef.current?.zoomOut()   },
-    { key: '0',         meta: true,               handler: () => canvasRef.current?.zoomReset() },
-    { key: '0',         meta: true, shift: true,  handler: () => canvasRef.current?.zoomFit()   },
+    { key: '8',         meta: true,               handler: () => canvasRef.current?.zoomIn()    },
+    { key: '2',         meta: true,               handler: () => canvasRef.current?.zoomOut()   },
+    { key: '1',         meta: true,               handler: () => canvasRef.current?.zoomReset() },
+    { key: '5',         meta: true,  handler: () => canvasRef.current?.zoomFit()   },
   ])
 
   const handleExportPng = async () => {

@@ -63,37 +63,32 @@ export function TemplateRenderer({
         {elements
           .filter((el) => el.visible)
           .map((el) => {
-            const sharedProps = {
-              key: el.id,
+            const { key, ...sharedProps } = {
+              key:      el.id,
               isSelected: el.id === selectedId,
-              onSelect: () => onSelectElement(el.id),
+              onSelect:   () => onSelectElement(el.id),
+              onChange:   (changes: Partial<Element>) => onUpdateElement(el.id, changes),
             }
 
             switch (el.type) {
               case 'rect':
-                return (
-                  <RectElementRenderer
-                    {...sharedProps}
-                    element={el}
-                    onChange={(changes) => onUpdateElement(el.id, changes as Partial<Element>)}
-                  />
-                )
+                return <RectElementRenderer key={key} element={el} {...sharedProps} />
               case 'text':
                 return (
                   <TextElementRenderer
-                    {...sharedProps}
+                    key={key}
                     element={el}
                     dataRow={dataRow}
-                    onChange={(changes) => onUpdateElement(el.id, changes as Partial<Element>)}
+                    {...sharedProps}
                   />
                 )
               case 'image':
                 return (
                   <ImageElementRenderer
-                    {...sharedProps}
+                    key={key}
                     element={el}
                     dataRow={dataRow}
-                    onChange={(changes) => onUpdateElement(el.id, changes as Partial<Element>)}
+                    {...sharedProps}
                   />
                 )
               default:

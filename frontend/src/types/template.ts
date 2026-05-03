@@ -5,13 +5,12 @@ export type BindableString =
 // Image sources get their own type — more explicit than BindableString
 export type ImageSrc =
   | { type: 'none' }
-  | { type: 'asset'; assetId: string }
+  | { type: 'asset'; assetId: string; assetName: string }  // ← add assetName
   | {
       type: 'binding'
       column: string
-      placeholder?: { assetId: string }
+      placeholder?: { assetId: string; assetName: string } // ← add assetName
     }
-
 
 export type BindableNumber =
   | { type: 'static'; value: number }

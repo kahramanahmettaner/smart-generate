@@ -495,3 +495,52 @@
     }
   }
 }
+
+.missingAssetBlock {
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+  padding: $space-2;
+  background: var(--color-danger-subtle);
+  border: 1px solid rgba(220, 38, 38, 0.2);
+  border-radius: $radius-md;
+  margin-bottom: $space-2;
+}
+
+.missingAssetInfo {
+  display: flex;
+  gap: $space-2;
+  align-items: flex-start;
+}
+
+.missingIcon {
+  font-size: 14px;
+  color: var(--color-danger);
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.missingTitle {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: var(--color-danger);
+  margin-bottom: 2px;
+}
+
+.missingDesc {
+  font-size: $font-size-xs;
+  color: var(--color-text-secondary);
+  line-height: $line-height-loose;
+}
+
+.missingId {
+  display: inline-block;
+  margin-top: $space-1;
+  font-family: $font-mono;
+  font-size: 10px;
+  color: var(--color-text-tertiary);
+  background: var(--color-bg-tertiary);
+  padding: 1px 4px;
+  border-radius: $radius-sm;
+  word-break: break-all;
+}
