@@ -1,0 +1,232 @@
+@use '../../styles/variables' as *;
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal {
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border-default);
+  border-radius: $radius-xl;
+  width: 480px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: var(--shadow-lg);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $space-4 $space-5;
+  border-bottom: 1px solid var(--color-border-subtle);
+  flex-shrink: 0;
+}
+
+.title {
+  font-size: $font-size-md;
+  font-weight: $font-weight-medium;
+  color: var(--color-text-primary);
+}
+
+.closeBtn {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: $radius-md;
+  font-size: $font-size-sm;
+  color: var(--color-text-tertiary);
+  transition: all $transition-fast;
+
+  &:hover {
+    background: var(--color-bg-hover);
+    color: var(--color-text-primary);
+  }
+}
+
+.body {
+  flex: 1;
+  overflow-y: auto;
+  padding: $space-5;
+  display: flex;
+  flex-direction: column;
+  gap: $space-4;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: $space-1;
+}
+
+.label {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: var(--color-text-secondary);
+}
+
+.input {
+  height: 36px;
+  padding: 0 $space-3;
+  font-size: $font-size-sm;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border-default);
+  border-radius: $radius-md;
+  color: var(--color-text-primary);
+  transition: border-color $transition-fast;
+
+  &:focus {
+    outline: none;
+    border-color: var(--color-accent);
+  }
+
+  &.inputError {
+    border-color: var(--color-danger);
+  }
+
+  &[type='number'] {
+    appearance: textfield;
+    -moz-appearance: textfield;
+
+    &::-webkit-inner-spin-button,
+    &::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+    }
+  }
+}
+
+.errorMsg {
+  font-size: $font-size-xs;
+  color: var(--color-danger);
+}
+
+.presetGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: $space-2;
+}
+
+.presetBtn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: $space-2 $space-3;
+  border: 1px solid var(--color-border-default);
+  border-radius: $radius-md;
+  background: transparent;
+  text-align: left;
+  transition: all $transition-fast;
+
+  &:hover {
+    background: var(--color-bg-hover);
+    border-color: var(--color-border-strong);
+  }
+
+  &.presetActive {
+    background: var(--color-accent-subtle);
+    border-color: var(--color-accent);
+  }
+}
+
+.presetLabel {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: var(--color-text-primary);
+
+  .presetActive & {
+    color: var(--color-accent-text);
+  }
+}
+
+.presetDims {
+  font-size: $font-size-xs;
+  color: var(--color-text-tertiary);
+
+  .presetActive & {
+    color: var(--color-accent);
+  }
+}
+
+.dimsRow {
+  display: flex;
+  align-items: flex-end;
+  gap: $space-3;
+}
+
+.dimsSeparator {
+  font-size: $font-size-md;
+  color: var(--color-text-tertiary);
+  padding-bottom: 6px;
+  flex-shrink: 0;
+}
+
+.resPreview {
+  display: flex;
+  align-items: center;
+  gap: $space-3;
+}
+
+.resPreviewBox {
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border-default);
+  border-radius: $radius-sm;
+  flex-shrink: 0;
+}
+
+.resPreviewLabel {
+  font-size: $font-size-sm;
+  color: var(--color-text-secondary);
+}
+
+.footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: $space-2;
+  padding: $space-4 $space-5;
+  border-top: 1px solid var(--color-border-subtle);
+  flex-shrink: 0;
+}
+
+.cancelBtn {
+  height: 36px;
+  padding: 0 $space-4;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  border: 1px solid var(--color-border-default);
+  border-radius: $radius-md;
+  color: var(--color-text-secondary);
+  background: transparent;
+  transition: all $transition-fast;
+
+  &:hover {
+    background: var(--color-bg-hover);
+    color: var(--color-text-primary);
+  }
+}
+
+.confirmBtn {
+  height: 36px;
+  padding: 0 $space-5;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  background: var(--color-accent);
+  color: #ffffff;
+  border: none;
+  border-radius: $radius-md;
+  transition: background $transition-fast;
+
+  &:hover {
+    background: var(--color-accent-hover);
+  }
+}

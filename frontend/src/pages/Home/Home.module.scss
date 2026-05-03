@@ -1,0 +1,123 @@
+@use '../../styles/variables' as *;
+
+.page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: var(--color-bg-app);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 $space-8;
+  height: $header-height;
+  background: var(--color-bg-primary);
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.logo {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  color: var(--color-text-primary);
+  letter-spacing: -0.02em;
+}
+
+.themeBtn {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  padding: $space-1 $space-3;
+  border: 1px solid var(--color-border-default);
+  border-radius: $radius-md;
+  color: var(--color-text-secondary);
+  background: transparent;
+  transition: all $transition-fast;
+
+  &:hover {
+    background: var(--color-bg-hover);
+    color: var(--color-text-primary);
+  }
+}
+
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: $space-10 $space-8;
+  gap: $space-8;
+}
+
+.hero {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: $space-3;
+}
+
+.heroTitle {
+  font-size: 32px;
+  font-weight: $font-weight-bold;
+  color: var(--color-text-primary);
+  letter-spacing: -0.02em;
+  line-height: $line-height-tight;
+}
+
+.heroSub {
+  font-size: $font-size-md;
+  color: var(--color-text-secondary);
+  line-height: $line-height-base;
+}
+
+.actions {
+  display: grid;
+  grid-template-columns: repeat(2, 240px);
+  gap: $space-4;
+}
+
+.actionCard {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: $space-2;
+  padding: $space-5;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border-default);
+  border-radius: $radius-xl;
+  text-align: left;
+  cursor: pointer;
+  transition: all $transition-base;
+
+  &:hover {
+    border-color: var(--color-accent);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-1px);
+  }
+}
+
+.actionIcon {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  background: var(--color-accent-subtle);
+  color: var(--color-accent);
+  border-radius: $radius-md;
+  margin-bottom: $space-1;
+}
+
+.actionTitle {
+  font-size: $font-size-base;
+  font-weight: $font-weight-medium;
+  color: var(--color-text-primary);
+}
+
+.actionDesc {
+  font-size: $font-size-sm;
+  color: var(--color-text-tertiary);
+  line-height: $line-height-loose;
+}

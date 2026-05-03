@@ -1,73 +1,58 @@
 import { create } from 'zustand'
 import { temporal } from 'zundo'
+import { generateId } from '../lib/utils'
 import type { Template, Element } from '../types/template'
+import type { TemplateConfig } from '../components/TemplateConfigModal/TemplateConfigModal'
 
 type EditorState = {
-  template: Template
+  template:   Template
   selectedId: string | null
 
-  // Actions
-  selectElement: (id: string | null) => void
-  addElement: (el: Element) => void
-  updateElement: (id: string, changes: Partial<Element>) => void
-  deleteElement: (id: string) => void
+  // Selection
+  selectElement:  (id: string | null) => void
+
+  // Element CRUD
+  addElement:      (el: Element) => void
+  updateElement:   (id: string, changes: Partial<Element>) => void
+  deleteElement:   (id: string) => void
   reorderElements: (orderedIds: string[]) => void
+
+  // Template lifecycle
+  initTemplate:       (config: TemplateConfig) => void
+  loadTemplate:       (template: Template) => void
+  exportTemplateJson: () => string
 }
 
 const defaultTemplate: Template = {
-  id: 'tpl_default',
-  name: 'Untitled Template',
-  canvas: { width: 1080, height: 1080, background: '#ffffff' },
-  elements: [
-    {
-      id: 'el_001',
-      type: 'rect',
-      x: 100, y: 100,
-      width: 300, height: 200,
-      rotation: 0, opacity: 1,
-      visible: true, locked: false,
-      props: {
-        fill: '#E0E7FF',
-        stroke: '#6366F1',
-        strokeWidth: 2,
-        cornerRadius: 8,
-      }
-    },
-    {
-      id: 'el_002',
-      type: 'text',
-      x: 100, y: 340,
-      width: 400, height: 60,
-      rotation: 0, opacity: 1,
-      visible: true, locked: false,
-      props: {
-        content: { type: 'static', value: 'Hello World' },
-        fontSize: 32,
-        fontFamily: 'Inter',
-        color: '#111827',
-        fontWeight: 'bold',
-        align: 'left',
-        lineHeight: 1.4,
-      }
-    }
-  ]
+  id:     generateId('tpl'),
+  name:   'Untitled template',
+  canvas: {
+    width:      1080,
+    height:     1080,
+    background: '#ffffff',
+  },
+  elements: [],
 }
 
 export const useEditorStore = create<EditorState>()(
   temporal(
-    (set) => ({
-      template: defaultTemplate,
+    (set, get) => ({
+      template:   defaultTemplate,
       selectedId: null,
+
+      // ─── Selection ──────────────────────────────────────────────────────
 
       selectElement: (id) =>
         set({ selectedId: id }),
+
+      // ─── Element CRUD ────────────────────────────────────────────────────
 
       addElement: (el) =>
         set((state) => ({
           template: {
             ...state.template,
-            elements: [...state.template.elements, el]
-          }
+            elements: [...state.template.elements, el],
+          },
         })),
 
       updateElement: (id, changes) =>
@@ -75,18 +60,18 @@ export const useEditorStore = create<EditorState>()(
           template: {
             ...state.template,
             elements: state.template.elements.map((el) =>
-              el.id === id ? ({ ...el, ...changes } as Element) : el
-            )
-          }
+              el.id === id ? { ...el, ...changes } as Element : el
+            ),
+          },
         })),
 
       deleteElement: (id) =>
         set((state) => ({
           template: {
             ...state.template,
-            elements: state.template.elements.filter((el) => el.id !== id)
+            elements: state.template.elements.filter((el) => el.id !== id),
           },
-          selectedId: null
+          selectedId: state.selectedId === id ? null : state.selectedId,
         })),
 
       reorderElements: (orderedIds) =>
@@ -95,25 +80,55 @@ export const useEditorStore = create<EditorState>()(
             ...state.template,
             elements: orderedIds
               .map((id) => state.template.elements.find((el) => el.id === id))
-              .filter(Boolean) as Element[]
-          }
+              .filter(Boolean) as Element[],
+          },
         })),
+
+      // ─── Template lifecycle ──────────────────────────────────────────────
+
+      initTemplate: (config) =>
+        set({
+          template: {
+            id:     generateId('tpl'),
+            name:   config.name,
+            canvas: {
+              width:      config.width,
+              height:     config.height,
+              background: '#ffffff',
+            },
+            elements: [],
+          },
+          selectedId: null,
+        }),
+
+      loadTemplate: (template) =>
+        set({
+          template,
+          selectedId: null,
+        }),
+
+      exportTemplateJson: () => {
+        return JSON.stringify(get().template, null, 2)
+      },
     }),
     {
       limit: 50,
-      // only track template changes in history, not selection
+      // Only track template changes in history, not selection
       partialize: (state) => ({ template: state.template }),
     }
   )
 )
 
-// Separate hook for history controls
-export const useHistory = () => {
-  const { undo, redo, pastStates, futureStates } = useEditorStore.temporal.getState()
+// ─── History hook ────────────────────────────────────────────────────────────
+
+export function useHistory() {
+  const { undo, redo, pastStates, futureStates } =
+    useEditorStore.temporal.getState()
+
   return {
     undo,
     redo,
-    canUndo: pastStates.length > 0,
+    canUndo: pastStates.length  > 0,
     canRedo: futureStates.length > 0,
   }
 }
