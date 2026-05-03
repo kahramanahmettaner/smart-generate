@@ -5,6 +5,8 @@ import { useState } from 'react';
 import { useAssetStore } from '../../store/useAssetStore';
 import type { ImageAsset } from '../../types/asset';
 import { AssetPickerModal } from '../AssetPicker/AssetPickerModal';
+import { useConfirm } from '../../hooks/useConfirm';
+import { ConfirmDialog } from '../../components/ConfirmDialog/ConfirmDialog';
 
 function PropRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -299,117 +301,219 @@ function ImageAlignControls({ el, onChange }: {
 function ImageProperties({ el, onChange, onOpenPicker }: {
   el: ImageElement
   onChange: (c: Partial<ImageElement>) => void
-  onOpenPicker: () => void
+  onOpenPicker: (target: 'main' | 'placeholder') => void
 }) {
   const { getAsset } = useAssetStore()
+  const { confirm, dialogProps } = useConfirm()
   const src          = el.props.src
-  const asset        = src.type === 'asset' ? getAsset(src.assetId) : null
+  const isBinding    = src.type === 'binding'
+
+  // Resolve assets for display
+  const mainAsset = src.type === 'asset'
+    ? getAsset(src.assetId)
+    : null
+
+  const placeholderAsset = src.type === 'binding' && src.placeholder
+    ? getAsset(src.placeholder.assetId)
+    : null
+
+  const switchToBinding = async () => {
+    if (src.type === 'asset' && src.assetId) {
+      const ok = await confirm({
+        title:        'Switch to column binding?',
+        message:      'The currently set image will be removed. You can set a placeholder image after switching.',
+        confirmLabel: 'Switch',
+        cancelLabel:  'Keep asset',
+        variant:      'danger',
+      })
+      if (!ok) return
+    }
+    onChange({
+      props: {
+        ...el.props,
+        src: { type: 'binding', column: '', placeholder: undefined }
+      }
+    })
+  }
+
+  const switchToAsset = async () => {
+    if (src.type === 'binding' && (src.column || src.placeholder)) {
+      const ok = await confirm({
+        title:        'Switch to asset?',
+        message:      'The column binding and placeholder will be removed.',
+        confirmLabel: 'Switch',
+        cancelLabel:  'Keep binding',
+        variant:      'danger',
+      })
+      if (!ok) return
+    }
+    onChange({
+      props: { ...el.props, src: { type: 'none' } }
+    })
+  }
 
   return (
-    <div className={styles.section}>
-      <p className={styles.sectionTitle}>Image</p>
+    <>
+      <div className={styles.section}>
+        <p className={styles.sectionTitle}>Image</p>
 
-      {/* Source type toggle */}
-      <div className={styles.segmentedControl}>
-        <button
-          className={`${styles.segmentBtn} ${src.type !== 'binding' ? styles.segmentActive : ''}`}
-          onClick={() => {
-            if (src.type === 'binding') {
-              onChange({ props: { ...el.props, src: { type: 'none' } } })
-            }
-          }}
-        >
-          Asset
-        </button>
-        <button
-          className={`${styles.segmentBtn} ${src.type === 'binding' ? styles.segmentActive : ''}`}
-          onClick={() => {
-            if (src.type !== 'binding') {
-              onChange({ props: { ...el.props, src: { type: 'binding', column: '' } } })
-            }
-          }}
-        >
-          {'{ } Column'}
-        </button>
-      </div>
-
-      {/* Binding column input */}
-      {src.type === 'binding' && (
-        <input
-          type="text"
-          className={`${styles.input} ${styles.inputFull}`}
-          placeholder="dataset column name"
-          value={src.column}
-          onChange={(e) => onChange({
-            props: { ...el.props, src: { type: 'binding', column: e.target.value } }
-          })}
-        />
-      )}
-
-      {/* Asset source */}
-      {src.type !== 'binding' && (
-        <div className={styles.imageSourceBlock}>
-          {asset ? (
-            <div className={styles.imageSourceSet}>
-              <span className={styles.imageAssetName} title={asset.name}>
-                {asset.name}
-              </span>
-              <span className={styles.imageAssetDims}>
-                {asset.width}×{asset.height}
-              </span>
-              <div className={styles.imageSourceBtns}>
-                <button
-                  className={styles.imageSourceBtn}
-                  onClick={onOpenPicker}
-                  title="Change image"
-                >
-                  Change
-                </button>
-                <button
-                  className={`${styles.imageSourceBtn} ${styles.imageSourceBtnDanger}`}
-                  onClick={() => onChange({
-                    props: { ...el.props, src: { type: 'none' } }
-                  })}
-                  title="Remove image"
-                >
-                  Remove
-                </button>
-              </div>
-            </div>
-          ) : (
-            <button className={styles.setImageBtn} onClick={onOpenPicker}>
-              + Set image
-            </button>
-          )}
+        {/* Source mode segmented control */}
+        <div className={styles.segmentedControl}>
+          <button
+            className={`${styles.segmentBtn} ${!isBinding ? styles.segmentActive : ''}`}
+            onClick={switchToAsset}
+          >
+            Asset
+          </button>
+          <button
+            className={`${styles.segmentBtn} ${isBinding ? styles.segmentActive : ''}`}
+            onClick={switchToBinding}
+          >
+            {'{ } Column'}
+          </button>
         </div>
-      )}
 
-      {/* Fit — only when asset is set */}
-      {src.type === 'asset' && (
-        <>
-          <div className={styles.propRow} style={{ marginTop: 8 }}>
-            <span className={styles.propLabel}>Fit</span>
-            <div className={styles.propControl}>
-              <select
-                className={styles.select}
-                value={el.props.fit}
-                onChange={(e) => onChange({
-                  props: { ...el.props, fit: e.target.value as 'cover' | 'contain' | 'fill' }
-                })}
+        {/* ── Asset mode ── */}
+        {!isBinding && (
+          <div className={styles.imageSourceBlock}>
+            {mainAsset ? (
+              <div className={styles.imageSourceSet}>
+                <span className={styles.imageAssetName} title={mainAsset.name}>
+                  {mainAsset.name}
+                </span>
+                <span className={styles.imageAssetDims}>
+                  {mainAsset.width} × {mainAsset.height}px
+                </span>
+                <div className={styles.imageSourceBtns}>
+                  <button
+                    className={styles.imageSourceBtn}
+                    onClick={() => onOpenPicker('main')}
+                  >
+                    Change
+                  </button>
+                  <button
+                    className={`${styles.imageSourceBtn} ${styles.imageSourceBtnDanger}`}
+                    onClick={() => onChange({
+                      props: { ...el.props, src: { type: 'none' } }
+                    })}
+                  >
+                    Remove
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                className={styles.setImageBtn}
+                onClick={() => onOpenPicker('main')}
               >
-                <option value="cover">Cover</option>
-                <option value="contain">Contain</option>
-                <option value="fill">Fill</option>
-              </select>
+                + Set image
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* ── Binding mode ── */}
+        {isBinding && src.type === 'binding' && (
+          <div className={styles.bindingBlock}>
+
+            {/* Column name */}
+            <div className={styles.bindingFieldGroup}>
+              <p className={styles.miniLabel}>Dataset column</p>
+              <input
+                type="text"
+                className={`${styles.input} ${styles.inputFull}`}
+                placeholder="e.g. product_image"
+                value={src.column}
+                onChange={(e) => onChange({
+                  props: {
+                    ...el.props,
+                    src: { ...src, column: e.target.value }
+                  }
+                })}
+              />
+              {src.column.trim() && (
+                <p className={styles.bindingHint}>
+                  Reads from <code>{src.column}</code> at generation time
+                </p>
+              )}
+            </div>
+
+            {/* Placeholder */}
+            <div className={styles.bindingFieldGroup}>
+              <div className={styles.bindingPlaceholderHeader}>
+                <p className={styles.miniLabel}>Preview placeholder</p>
+                <span className={styles.bindingPlaceholderHint}>editor only</span>
+              </div>
+
+              {placeholderAsset ? (
+                <div className={styles.imageSourceSet}>
+                  <span className={styles.imageAssetName} title={placeholderAsset.name}>
+                    {placeholderAsset.name}
+                  </span>
+                  <span className={styles.imageAssetDims}>
+                    {placeholderAsset.width} × {placeholderAsset.height}px
+                  </span>
+                  <div className={styles.imageSourceBtns}>
+                    <button
+                      className={styles.imageSourceBtn}
+                      onClick={() => onOpenPicker('placeholder')}
+                    >
+                      Change
+                    </button>
+                    <button
+                      className={`${styles.imageSourceBtn} ${styles.imageSourceBtnDanger}`}
+                      onClick={() => onChange({
+                        props: {
+                          ...el.props,
+                          src: { ...src, placeholder: undefined }
+                        }
+                      })}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  className={`${styles.setImageBtn} ${styles.setImageBtnSubtle}`}
+                  onClick={() => onOpenPicker('placeholder')}
+                >
+                  + Set placeholder
+                </button>
+              )}
             </div>
           </div>
+        )}
 
-          {(el.props.fit === 'cover' || el.props.fit === 'contain') && (
-            <ImageAlignControls el={el} onChange={onChange} />
-          )}
-        </>
-      )}
-    </div>
+        {/* ── Fit + Alignment — always visible for both modes ── */}
+        <div className={styles.propRow} style={{ marginTop: 8 }}>
+          <span className={styles.propLabel}>Fit</span>
+          <div className={styles.propControl}>
+            <select
+              className={styles.select}
+              value={el.props.fit}
+              onChange={(e) => onChange({
+                props: {
+                  ...el.props,
+                  fit: e.target.value as 'cover' | 'contain' | 'fill'
+                }
+              })}
+            >
+              <option value="cover">Cover</option>
+              <option value="contain">Contain</option>
+              <option value="fill">Fill</option>
+            </select>
+          </div>
+        </div>
+
+        {(el.props.fit === 'cover' || el.props.fit === 'contain') && (
+          <ImageAlignControls el={el} onChange={onChange} />
+        )}
+      </div>
+
+      {/* Confirmation dialog */}
+      {dialogProps && <ConfirmDialog {...dialogProps} />}
+    </>
   )
 }
 
@@ -418,9 +522,13 @@ type Props = {
   canvasHeight: number
 }
 
-export function PropertiesPanel({ canvasWidth, canvasHeight }: Props) {
-  const [collapsed, setCollapsed] = useState(false)
-  const [showPicker,   setShowPicker]   = useState(false)
+export function PropertiesPanel({ canvasWidth, canvasHeight }: {
+  canvasWidth: number
+  canvasHeight: number
+}) {
+  const [collapsed,    setCollapsed]    = useState(false)
+  const [pickerTarget, setPickerTarget] = useState<'main' | 'placeholder' | null>(null)
+
   const { template, selectedId, updateElement } = useEditorStore()
   const selected = template.elements.find((el) => el.id === selectedId)
 
@@ -429,72 +537,96 @@ export function PropertiesPanel({ canvasWidth, canvasHeight }: Props) {
   }
 
   const handleAssetSelect = (asset: ImageAsset, dims: { width: number; height: number }) => {
-    if (selected?.type === 'image') {
+    if (!selected || selected.type !== 'image') return
+
+    const el  = selected as ImageElement
+    const src = el.props.src
+
+    if (pickerTarget === 'main') {
       onChange({
         width:  dims.width,
         height: dims.height,
         props: {
-          ...(selected as ImageElement).props,
+          ...el.props,
           src: { type: 'asset', assetId: asset.id }
         }
       } as any)
     }
-    setShowPicker(false)
+
+    if (pickerTarget === 'placeholder' && src.type === 'binding') {
+      onChange({
+        props: {
+          ...el.props,
+          src: {
+            ...src,
+            placeholder: { assetId: asset.id }
+          }
+        }
+      } as any)
+      // Don't resize element when setting a placeholder
+    }
+
+    setPickerTarget(null)
   }
 
   return (
-    <div className={`${styles.panel} ${collapsed ? styles.collapsed : ''}`}>
-      <button
-        className={styles.header}
-        onClick={() => setCollapsed((c) => !c)}
-      >
-        <span className={`${styles.caret} ${collapsed ? styles.caretClosed : ''}`}>
-          ▾
-        </span>
-        <span className={styles.title}>Properties</span>
-      </button>
+    <>
+      <div className={`${styles.panel} ${collapsed ? styles.collapsed : ''}`}>
+        <button
+          className={styles.header}
+          onClick={() => setCollapsed((c) => !c)}
+        >
+          <span className={`${styles.caret} ${collapsed ? styles.caretClosed : ''}`}>
+            ▾
+          </span>
+          <span className={styles.title}>Properties</span>
+        </button>
 
-      {!collapsed && (
-        <>
-          {!selected ? (
-            <p className={styles.empty}>Select an element to edit its properties</p>
-          ) : (
-            <div 
-              className={styles.content}
-              onKeyDown={(e) => {
-                if (e.key === 'Escape' || e.key === 'Enter') {
-                  (e.target as HTMLElement).blur();
-                  e.stopPropagation();
-                }
-              }}
-              >
-              <TransformSection el={selected} onChange={onChange} />
-              {selected.type === 'rect' && (
-                <RectProperties el={selected} onChange={(c) => onChange(c as Partial<Element>)} />
-              )}
-              {selected.type === 'text' && (
-                <TextProperties el={selected} onChange={(c) => onChange(c as Partial<Element>)} />
-              )}
-              {selected?.type === 'image' && (
-                <ImageProperties
-                  el={selected as ImageElement}
-                  onChange={(c) => onChange(c as Partial<Element>)}
-                  onOpenPicker={() => setShowPicker(true)}
-                />
-              )}
-            </div>
-          )}
+        {!collapsed && (
+          <>
+            {!selected ? (
+              <p className={styles.empty}>Select an element to edit its properties</p>
+            ) : (
+              <div className={styles.content}>
+                <TransformSection el={selected} onChange={onChange} />
 
-          {showPicker && (
-            <AssetPickerModal
-              onSelect={handleAssetSelect}
-              onClose={() => setShowPicker(false)}
-              canvasWidth={canvasWidth}
-              canvasHeight={canvasHeight}
-            />
-          )}
-        </>
+                {selected.type === 'rect' && (
+                  <RectProperties
+                    el={selected}
+                    onChange={(c) => onChange(c as Partial<Element>)}
+                  />
+                )}
+
+                {selected.type === 'text' && (
+                  <TextProperties
+                    el={selected}
+                    onChange={(c) => onChange(c as Partial<Element>)}
+                  />
+                )}
+
+                {selected.type === 'image' && (
+                  <ImageProperties
+                    el={selected as ImageElement}
+                    onChange={(c) => onChange(c as Partial<Element>)}
+                    onOpenPicker={(target) => setPickerTarget(target)}
+                  />
+                )}
+              </div>
+            )}
+          </>
+        )}
+      </div>
+
+      {pickerTarget !== null && (
+        <AssetPickerModal
+          onSelect={handleAssetSelect}
+          onClose={() => setPickerTarget(null)}
+          canvasWidth={canvasWidth}
+          canvasHeight={canvasHeight}
+          // When picking a placeholder, don't apply fit dimensions
+          applyDimensions={pickerTarget === 'main'}
+        />
       )}
-    </div>
+    </>
   )
 }

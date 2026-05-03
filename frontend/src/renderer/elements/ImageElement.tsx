@@ -17,9 +17,25 @@ function resolveSrc(
   getAsset: (id: string) => ImageAsset | undefined,
   dataRow?: Record<string, string>
 ): string | null {
-  if (src.type === 'none')    return null
-  if (src.type === 'asset')   return getAsset(src.assetId)?.dataUrl ?? null
-  if (src.type === 'binding') return dataRow?.[src.column] ?? null
+  if (src.type === 'none') return null
+
+  if (src.type === 'asset') {
+    return getAsset(src.assetId)?.dataUrl ?? null
+  }
+
+  if (src.type === 'binding') {
+    // Real data row value takes priority
+    const rowValue = dataRow?.[src.column]
+    if (rowValue) return rowValue
+
+    // Fall back to placeholder asset if set
+    if (src.placeholder?.assetId) {
+      return getAsset(src.placeholder.assetId)?.dataUrl ?? null
+    }
+
+    return null
+  }
+
   return null
 }
 
@@ -156,7 +172,11 @@ export function ImageElementRenderer({
         <Text
           y={element.height / 2 + 14}
           width={element.width}
-          text="no image set"
+          text={
+            element.props.src.type === 'binding'
+              ? `{{${element.props.src.column || 'column'}}}`
+              : 'no image set'
+          }
           fontSize={11}
           fill="#AAAAAA"
           align="center"

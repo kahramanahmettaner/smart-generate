@@ -8,9 +8,10 @@ type Props = {
   onClose:  () => void
   canvasWidth:  number
   canvasHeight: number
+  applyDimensions?: boolean  // ← default true
 }
 
-export function AssetPickerModal({ onSelect, onClose, canvasWidth, canvasHeight }: Props) {
+export function AssetPickerModal({ onSelect, onClose, canvasWidth, canvasHeight, applyDimensions = true }: Props) {
   const { assets, addAsset, removeAsset } = useAssetStore()
   const assetList = Object.values(assets).sort((a, b) => b.createdAt - a.createdAt)
 
@@ -71,7 +72,9 @@ export function AssetPickerModal({ onSelect, onClose, canvasWidth, canvasHeight 
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
 
         <div className={styles.header}>
-          <span className={styles.title}>Image library</span>
+          <span className={styles.title}>
+            {applyDimensions ? 'Image library' : 'Choose placeholder image'}
+          </span>
           <button className={styles.closeBtn} onClick={onClose}>✕</button>
         </div>
 
@@ -102,29 +105,39 @@ export function AssetPickerModal({ onSelect, onClose, canvasWidth, canvasHeight 
           )}
         </div>
 
-        {/* Size options */}
-        <div className={styles.sizeOptions}>
-          <span className={styles.sizeOptionsLabel}>When adding to canvas:</span>
-          <label className={styles.checkboxLabel}>
-            <input
-              type="checkbox"
-              checked={keepAspectRatio}
-              onChange={(e) => setKeepAspectRatio(e.target.checked)}
-            />
-            Keep aspect ratio
-          </label>
-          <label className={styles.checkboxLabel}>
-            <input
-              type="checkbox"
-              checked={keepOriginalRes}
-              onChange={(e) => {
-                setKeepOriginalRes(e.target.checked)
-                if (e.target.checked) setKeepAspectRatio(true)
-              }}
-            />
-            Use original resolution
-          </label>
-        </div>
+        {/* Only show size options when dimensions will be applied */}
+        {applyDimensions && (
+          <div className={styles.sizeOptions}>
+            <span className={styles.sizeOptionsLabel}>When adding to canvas:</span>
+            <label className={styles.checkboxLabel}>
+              <input
+                type="checkbox"
+                checked={keepAspectRatio}
+                onChange={(e) => setKeepAspectRatio(e.target.checked)}
+              />
+              Keep aspect ratio
+            </label>
+            <label className={styles.checkboxLabel}>
+              <input
+                type="checkbox"
+                checked={keepOriginalRes}
+                onChange={(e) => {
+                  setKeepOriginalRes(e.target.checked)
+                  if (e.target.checked) setKeepAspectRatio(true)
+                }}
+              />
+              Use original resolution
+            </label>
+          </div>
+        )}
+
+        {/* Placeholder context hint */}
+        {!applyDimensions && (
+          <p className={styles.placeholderHint}>
+            This image will only appear in the editor as a preview.
+            It won't affect the element size or appear in exports.
+          </p>
+        )}
 
         {/* Library grid */}
         {assetList.length > 0 ? (

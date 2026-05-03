@@ -235,3 +235,11 @@
     color: var(--color-text-primary);
   }
 }
+
+.placeholderHint {
+  font-size: $font-size-xs;
+  color: var(--color-text-tertiary);
+  line-height: $line-height-loose;
+  padding: 0 $space-4 $space-3;
+  flex-shrink: 0;
+}

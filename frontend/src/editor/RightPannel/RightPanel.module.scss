@@ -204,3 +204,58 @@
     color: var(--color-accent);
   }
 }
+
+.bindingBlock {
+  display: flex;
+  flex-direction: column;
+  gap: $space-3;
+  margin-bottom: $space-2;
+}
+
+.bindingFieldGroup {
+  display: flex;
+  flex-direction: column;
+  gap: $space-1;
+}
+
+.bindingHint {
+  font-size: $font-size-xs;
+  color: var(--color-text-tertiary);
+  line-height: $line-height-base;
+
+  code {
+    font-family: $font-mono;
+    font-size: $font-size-xs;
+    background: var(--color-bg-tertiary);
+    padding: 1px 4px;
+    border-radius: $radius-sm;
+    color: var(--color-accent-text);
+  }
+}
+
+.bindingPlaceholderHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.bindingPlaceholderHint {
+  font-size: $font-size-xs;
+  color: var(--color-text-tertiary);
+  font-style: italic;
+}
+
+.setImageBtnSubtle {
+  // Slightly less prominent than the main set image button
+  border-style: dashed;
+  border-color: var(--color-border-default);
+  color: var(--color-text-tertiary);
+  font-size: $font-size-xs;
+  height: 30px;
+
+  &:hover {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+    background: var(--color-accent-subtle);
+  }
+}

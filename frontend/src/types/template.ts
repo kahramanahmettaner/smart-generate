@@ -4,9 +4,13 @@ export type BindableString =
 
 // Image sources get their own type — more explicit than BindableString
 export type ImageSrc =
-  | { type: 'asset';   assetId: string }
-  | { type: 'binding'; column: string }
-  | { type: 'none' }  // placeholder state — no asset selected yet
+  | { type: 'none' }
+  | { type: 'asset'; assetId: string }
+  | {
+      type: 'binding'
+      column: string
+      placeholder?: { assetId: string }
+    }
 
 
 export type BindableNumber =
