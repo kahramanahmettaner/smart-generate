@@ -1,12 +1,16 @@
 @use '../../styles/variables' as *;
 
-.editor {
+$tab-bar-height: 52px;
+
+.shell {
   display: flex;
   flex-direction: column;
   height: 100vh;
   overflow: hidden;
   background: var(--color-bg-app);
 }
+
+// ── Header ──────────────────────────────────────────────────────────────────
 
 .header {
   display: flex;
@@ -20,28 +24,52 @@
   gap: $space-3;
 }
 
-.headerLeft,
-.headerCenter,
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: $space-3;
+  flex: 1;
+  min-width: 0;
+}
+
 .headerRight {
   display: flex;
   align-items: center;
   gap: $space-2;
+  flex-shrink: 0;
 }
 
-.headerLeft  { flex: 1; }
-.headerCenter { flex-shrink: 0; }
-.headerRight { flex: 1; justify-content: flex-end; }
+.backBtn {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: var(--color-text-secondary);
+  padding: $space-1 $space-2;
+  border: 1px solid var(--color-border-default);
+  border-radius: $radius-md;
+  white-space: nowrap;
+  transition: all $transition-fast;
+  flex-shrink: 0;
+
+  &:hover {
+    background: var(--color-bg-hover);
+    color: var(--color-text-primary);
+  }
+}
 
 .templateName {
   font-size: $font-size-base;
   font-weight: $font-weight-medium;
   color: var(--color-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.body {
-  flex: 1;
-  display: flex;
-  overflow: hidden;
+.canvasSize {
+  font-size: $font-size-xs;
+  color: var(--color-text-tertiary);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .btn {
@@ -52,44 +80,95 @@
   border-radius: $radius-md;
   background: transparent;
   color: var(--color-text-secondary);
-  transition:
-    background $transition-fast,
-    color $transition-fast,
-    border-color $transition-fast;
+  white-space: nowrap;
+  transition: all $transition-fast;
 
   &:hover {
     background: var(--color-bg-hover);
     color: var(--color-text-primary);
   }
-
-  &:disabled {
-    opacity: 0.35;
-    cursor: not-allowed;
-    pointer-events: none;
-  }
 }
 
-.btnPrimary {
-  background: var(--color-accent);
-  color: #ffffff;
-  border-color: transparent;
+// ── Tab content ──────────────────────────────────────────────────────────────
 
-  &:hover {
-    background: var(--color-accent-hover);
-    color: #ffffff;
-  }
+.tabContent {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
 }
 
-.debugBadge {
-  position: fixed;
-  bottom: $space-4;
-  left: $space-4;
-  font-size: $font-size-xs;
-  font-family: monospace;
-  padding: $space-1 $space-2;
+// Always mounted — hidden via visibility + pointer-events
+// so internal state (zoom, scroll) is preserved on tab switch
+.tabVisible {
+  position: absolute;
+  inset: 0;
+  visibility: visible;
+  pointer-events: all;
+}
+
+.tabHidden {
+  position: absolute;
+  inset: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+// ── Bottom tab bar ───────────────────────────────────────────────────────────
+
+.tabBar {
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  height: $tab-bar-height;
   background: var(--color-bg-primary);
-  border: 1px solid var(--color-border-default);
+  border-top: 1px solid var(--color-border-subtle);
+  flex-shrink: 0;
+  gap: 2px;
+  padding: 0 $space-2;
+}
+
+.tabBtn {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  width: 80px;
+  padding: $space-1 $space-3;
   border-radius: $radius-md;
   color: var(--color-text-tertiary);
-  pointer-events: none;
+  background: transparent;
+  transition: color $transition-fast, background $transition-fast;
+
+  &:hover {
+    color: var(--color-text-primary);
+    background: var(--color-bg-hover);
+  }
+
+  &.tabBtnActive {
+    color: var(--color-accent);
+  }
+}
+
+.tabIcon {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.tabLabel {
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  line-height: 1;
+}
+
+.tabIndicator {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 24px;
+  height: 2px;
+  background: var(--color-accent);
+  border-radius: 0 0 $radius-sm $radius-sm;
 }
