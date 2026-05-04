@@ -1,0 +1,487 @@
+@use '../../../styles/variables' as *;
+
+.tab {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  background: var(--color-bg-app);
+  position: relative;
+}
+
+.globalDragOver {
+  // Subtle pulse when dragging over the whole tab
+  outline: 2px dashed var(--color-accent);
+  outline-offset: -2px;
+}
+
+// ── Toolbar ──────────────────────────────────────────────────────────────────
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: $space-3;
+  padding: 0 $space-5;
+  height: 52px;
+  background: var(--color-bg-primary);
+  border-bottom: 1px solid var(--color-border-subtle);
+  flex-shrink: 0;
+}
+
+.toolbarLeft  { display: flex; align-items: center; }
+.toolbarCenter { flex: 1; }
+.toolbarRight { display: flex; align-items: center; gap: $space-3; }
+
+.uploadBtn {
+  display: flex;
+  align-items: center;
+  gap: $space-2;
+  height: 32px;
+  padding: 0 $space-4;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  background: var(--color-accent);
+  color: #ffffff;
+  border-radius: $radius-md;
+  border: none;
+  transition: background $transition-fast;
+  white-space: nowrap;
+
+  &:hover:not(:disabled) { background: var(--color-accent-hover); }
+  &:disabled { opacity: 0.6; cursor: not-allowed; }
+}
+
+.searchWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  max-width: 320px;
+}
+
+.searchIcon {
+  position: absolute;
+  left: $space-2;
+  font-size: 16px;
+  color: var(--color-text-tertiary);
+  pointer-events: none;
+}
+
+.searchInput {
+  width: 100%;
+  height: 32px;
+  padding: 0 $space-6 0 28px;
+  font-size: $font-size-sm;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border-default);
+  border-radius: $radius-md;
+  color: var(--color-text-primary);
+  transition: border-color $transition-fast;
+
+  &:focus {
+    outline: none;
+    border-color: var(--color-accent);
+  }
+
+  &::placeholder { color: var(--color-text-tertiary); }
+}
+
+.searchClear {
+  position: absolute;
+  right: $space-2;
+  font-size: 11px;
+  color: var(--color-text-tertiary);
+  padding: 2px 4px;
+  border-radius: $radius-sm;
+  transition: all $transition-fast;
+
+  &:hover {
+    background: var(--color-bg-active);
+    color: var(--color-text-primary);
+  }
+}
+
+.sortWrap {
+  display: flex;
+  align-items: center;
+  gap: $space-2;
+}
+
+.sortLabel {
+  font-size: $font-size-xs;
+  color: var(--color-text-tertiary);
+  white-space: nowrap;
+}
+
+.sortSelect {
+  height: 30px;
+  padding: 0 $space-2;
+  font-size: $font-size-sm;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border-default);
+  border-radius: $radius-md;
+  color: var(--color-text-primary);
+  cursor: pointer;
+
+  &:focus { outline: none; border-color: var(--color-accent); }
+}
+
+.viewToggle {
+  display: flex;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border-default);
+  border-radius: $radius-md;
+  padding: 2px;
+  gap: 2px;
+}
+
+.viewBtn {
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  border-radius: calc($radius-md - 2px);
+  color: var(--color-text-tertiary);
+  transition: all $transition-fast;
+
+  &:hover { color: var(--color-text-primary); }
+
+  &.viewBtnActive {
+    background: var(--color-bg-primary);
+    color: var(--color-text-primary);
+    box-shadow: var(--shadow-sm);
+  }
+}
+
+// ── Stats bar ────────────────────────────────────────────────────────────────
+
+.statsBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $space-1 $space-5;
+  font-size: $font-size-xs;
+  color: var(--color-text-tertiary);
+  background: var(--color-bg-primary);
+  border-bottom: 1px solid var(--color-border-subtle);
+  flex-shrink: 0;
+}
+
+// ── Content area ─────────────────────────────────────────────────────────────
+
+.content {
+  flex: 1;
+  overflow-y: auto;
+  padding: $space-5;
+}
+
+// ── Empty states ─────────────────────────────────────────────────────────────
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: $space-3;
+  height: 100%;
+  min-height: 300px;
+  text-align: center;
+}
+
+.emptyIcon {
+  font-size: 48px;
+  color: var(--color-text-tertiary);
+  line-height: 1;
+}
+
+.emptyTitle {
+  font-size: $font-size-md;
+  font-weight: $font-weight-medium;
+  color: var(--color-text-primary);
+}
+
+.emptyDesc {
+  font-size: $font-size-sm;
+  color: var(--color-text-tertiary);
+  line-height: $line-height-loose;
+  max-width: 300px;
+}
+
+.emptyUploadBtn {
+  height: 36px;
+  padding: 0 $space-5;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  background: var(--color-accent);
+  color: #ffffff;
+  border-radius: $radius-md;
+  border: none;
+  transition: background $transition-fast;
+
+  &:hover { background: var(--color-accent-hover); }
+}
+
+.clearSearchBtn {
+  font-size: $font-size-sm;
+  color: var(--color-accent);
+  padding: $space-1 $space-3;
+  border: 1px solid var(--color-accent);
+  border-radius: $radius-md;
+  transition: all $transition-fast;
+
+  &:hover {
+    background: var(--color-accent-subtle);
+  }
+}
+
+// ── Grid view ────────────────────────────────────────────────────────────────
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: $space-4;
+}
+
+.gridCard {
+  position: relative;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: $radius-lg;
+  overflow: hidden;
+  cursor: pointer;
+  transition: border-color $transition-fast, box-shadow $transition-fast, transform $transition-fast;
+
+  &:hover {
+    border-color: var(--color-accent);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-1px);
+
+    .gridOverlay  { opacity: 1; }
+    .gridRemoveBtn { opacity: 1; }
+  }
+}
+
+.gridThumb {
+  width: 100%;
+  aspect-ratio: 1;
+  background: var(--color-bg-secondary);
+  overflow: hidden;
+  position: relative;
+  // Checkerboard for transparent images
+  background-image:
+    linear-gradient(45deg, var(--color-bg-tertiary) 25%, transparent 25%),
+    linear-gradient(-45deg, var(--color-bg-tertiary) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, var(--color-bg-tertiary) 75%),
+    linear-gradient(-45deg, transparent 75%, var(--color-bg-tertiary) 75%);
+  background-size: 12px 12px;
+  background-position: 0 0, 0 6px, 6px -6px, -6px 0px;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+}
+
+.gridOverlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: $space-1 $space-2;
+  background: linear-gradient(transparent, rgba(0,0,0,0.5));
+  opacity: 0;
+  transition: opacity $transition-fast;
+}
+
+.gridDims {
+  font-size: $font-size-xs;
+  color: rgba(255,255,255,0.9);
+  font-weight: $font-weight-medium;
+}
+
+.gridMeta {
+  padding: $space-2 $space-3;
+  border-top: 1px solid var(--color-border-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.gridName {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: var(--color-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gridSize {
+  font-size: $font-size-xs;
+  color: var(--color-text-tertiary);
+}
+
+.gridRemoveBtn {
+  position: absolute;
+  top: $space-1;
+  right: $space-1;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border-default);
+  border-radius: $radius-sm;
+  color: var(--color-text-secondary);
+  opacity: 0;
+  transition: all $transition-fast;
+
+  &:hover {
+    background: var(--color-danger-subtle);
+    color: var(--color-danger);
+    border-color: var(--color-danger);
+  }
+}
+
+// ── List view ────────────────────────────────────────────────────────────────
+
+.list {
+  display: flex;
+  flex-direction: column;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: $radius-lg;
+  overflow: hidden;
+}
+
+.listHeader {
+  display: grid;
+  grid-template-columns: 40px 1fr 140px 80px 110px 40px;
+  gap: $space-3;
+  padding: $space-2 $space-3;
+  background: var(--color-bg-secondary);
+  border-bottom: 1px solid var(--color-border-subtle);
+
+  span {
+    font-size: $font-size-xs;
+    font-weight: $font-weight-medium;
+    color: var(--color-text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+}
+
+.listRow {
+  display: grid;
+  grid-template-columns: 40px 1fr 140px 80px 110px 40px;
+  gap: $space-3;
+  align-items: center;
+  padding: $space-2 $space-3;
+  border-bottom: 1px solid var(--color-border-subtle);
+  cursor: pointer;
+  transition: background $transition-fast;
+
+  &:last-child { border-bottom: none; }
+
+  &:hover {
+    background: var(--color-bg-hover);
+    .listActions { opacity: 1; }
+  }
+}
+
+.listThumb {
+  width: 36px;
+  height: 36px;
+  border-radius: $radius-md;
+  overflow: hidden;
+  background: var(--color-bg-secondary);
+  flex-shrink: 0;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+}
+
+.listName {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: var(--color-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.listDims,
+.listSize,
+.listDate {
+  font-size: $font-size-sm;
+  color: var(--color-text-secondary);
+}
+
+.listActions {
+  display: flex;
+  justify-content: flex-end;
+  opacity: 0;
+  transition: opacity $transition-fast;
+}
+
+.listActionBtn {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  border-radius: $radius-sm;
+  color: var(--color-text-tertiary);
+  transition: all $transition-fast;
+
+  &:hover {
+    background: var(--color-danger-subtle);
+    color: var(--color-danger);
+  }
+}
+
+// ── Drag overlay ─────────────────────────────────────────────────────────────
+
+.dragOverlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(99, 102, 241, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.dragOverlayContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $space-3;
+  padding: $space-8 $space-10;
+  background: var(--color-bg-primary);
+  border: 2px dashed var(--color-accent);
+  border-radius: $radius-xl;
+  box-shadow: var(--shadow-lg);
+}
+
+.dragOverlayIcon {
+  font-size: 36px;
+  color: var(--color-accent);
+}
+
+.dragOverlayText {
+  font-size: $font-size-md;
+  font-weight: $font-weight-medium;
+  color: var(--color-accent);
+}

@@ -1,0 +1,215 @@
+@use '../../../../styles/variables' as *;
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal {
+  display: flex;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border-default);
+  border-radius: $radius-xl;
+  overflow: hidden;
+  width: 680px;
+  max-width: 95vw;
+  max-height: 85vh;
+  box-shadow: var(--shadow-lg);
+}
+
+.preview {
+  width: 320px;
+  flex-shrink: 0;
+  background: var(--color-bg-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  // Checkerboard for transparency
+  background-image:
+    linear-gradient(45deg, var(--color-bg-tertiary) 25%, transparent 25%),
+    linear-gradient(-45deg, var(--color-bg-tertiary) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, var(--color-bg-tertiary) 75%),
+    linear-gradient(-45deg, transparent 75%, var(--color-bg-tertiary) 75%);
+  background-size: 16px 16px;
+  background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
+
+  img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    display: block;
+  }
+}
+
+.info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: $space-5;
+  gap: $space-4;
+  overflow-y: auto;
+  min-width: 0;
+}
+
+.nameRow {
+  display: flex;
+  align-items: center;
+  gap: $space-2;
+}
+
+.assetName {
+  font-size: $font-size-md;
+  font-weight: $font-weight-medium;
+  color: var(--color-text-primary);
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.renameBtn {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: $radius-md;
+  font-size: 14px;
+  color: var(--color-text-tertiary);
+  flex-shrink: 0;
+  transition: all $transition-fast;
+
+  &:hover {
+    background: var(--color-bg-hover);
+    color: var(--color-text-primary);
+  }
+}
+
+.nameEditWrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: $space-1;
+}
+
+.nameInput {
+  width: 100%;
+  height: 32px;
+  padding: 0 $space-2;
+  font-size: $font-size-base;
+  font-weight: $font-weight-medium;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-accent);
+  border-radius: $radius-md;
+  color: var(--color-text-primary);
+  outline: none;
+
+  &.nameInputError {
+    border-color: var(--color-danger);
+  }
+}
+
+.nameErr {
+  font-size: $font-size-xs;
+  color: var(--color-danger);
+}
+
+.metaGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: $space-3;
+}
+
+.metaItem {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.metaLabel {
+  font-size: $font-size-xs;
+  color: var(--color-text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.metaValue {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: var(--color-text-primary);
+}
+
+.metaUsed {
+  color: var(--color-accent);
+}
+
+.idRow {
+  display: flex;
+  flex-direction: column;
+  gap: $space-1;
+  padding: $space-2 $space-3;
+  background: var(--color-bg-secondary);
+  border-radius: $radius-md;
+  border: 1px solid var(--color-border-subtle);
+}
+
+.idLabel {
+  font-size: $font-size-xs;
+  color: var(--color-text-tertiary);
+}
+
+.idValue {
+  font-family: $font-mono;
+  font-size: $font-size-xs;
+  color: var(--color-text-secondary);
+  word-break: break-all;
+}
+
+.actions {
+  display: flex;
+  justify-content: space-between;
+  gap: $space-2;
+  margin-top: auto;
+  padding-top: $space-2;
+  border-top: 1px solid var(--color-border-subtle);
+}
+
+.closeBtn {
+  height: 32px;
+  padding: 0 $space-4;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  border: 1px solid var(--color-border-default);
+  border-radius: $radius-md;
+  color: var(--color-text-secondary);
+  background: transparent;
+  transition: all $transition-fast;
+
+  &:hover {
+    background: var(--color-bg-hover);
+    color: var(--color-text-primary);
+  }
+}
+
+.deleteBtn {
+  height: 32px;
+  padding: 0 $space-4;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  border: 1px solid transparent;
+  border-radius: $radius-md;
+  background: var(--color-danger-subtle);
+  color: var(--color-danger);
+  transition: all $transition-fast;
+
+  &:hover {
+    background: var(--color-danger);
+    color: #ffffff;
+  }
+}
