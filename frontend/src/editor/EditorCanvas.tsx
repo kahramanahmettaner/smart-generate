@@ -10,7 +10,9 @@ type Props = {
   selectedId: string | null
   onSelectElement: (id: string | null) => void
   onUpdateElement: (id: string, changes: Partial<Element>) => void
-  stageRef: React.RefObject<Konva.Stage>
+  stageRef: React.RefObject<Konva.Stage>  
+  dataRow?:  Record<string, string>
+  readOnly?: boolean
 }
 
 const MIN_ZOOM = 0.05
@@ -21,7 +23,7 @@ const ZOOM_STEP = 0.1
 type Offset = { x: number; y: number }
 
 export const EditorCanvas = forwardRef<EditorCanvasHandle, Props>(function EditorCanvas(
-  { template, selectedId, onSelectElement, onUpdateElement, stageRef },
+  { template, selectedId, onSelectElement, onUpdateElement, stageRef, dataRow, readOnly, },
   ref
 ) {
   const [zoom, setZoom] = useState(0.5)
@@ -189,7 +191,7 @@ export const EditorCanvas = forwardRef<EditorCanvasHandle, Props>(function Edito
     <div
       className={`${styles.workspace} ${isPanning ? styles.panning : ''}`}
       ref={workspaceRef}
-      onMouseDown={onMouseDown}
+      onMouseDown={readOnly ? undefined : onMouseDown}  // ← disable pan in readOnly
       onWheel={onWheel}
     >
       <div
@@ -203,21 +205,22 @@ export const EditorCanvas = forwardRef<EditorCanvasHandle, Props>(function Edito
       >
         <TemplateRenderer
           template={template}
-          selectedId={selectedId}
-          onSelectElement={onSelectElement}
-          onUpdateElement={onUpdateElement}
+          selectedId={readOnly ? null : selectedId}
+          onSelectElement={readOnly ? () => {} : onSelectElement}
+          onUpdateElement={readOnly ? () => {} : onUpdateElement}
           stageRef={stageRef}
+          dataRow={dataRow}   // ← pass through
         />
       </div>
 
       <div className={styles.zoomWidget}>
-        <button className={styles.zoomBtn} onClick={zoomOut} title="Zoom out (Ctrl+2)">−</button>
-        <button className={styles.zoomValue} onClick={zoomReset} title="Reset to 100% (Ctrl+1)">
+        <button className={styles.zoomBtn} onClick={zoomOut} title="Zoom out">−</button>
+        <button className={styles.zoomValue} onClick={zoomReset} title="Reset to 100%">
           {Math.round(zoom * 100)}%
         </button>
-        <button className={styles.zoomBtn} onClick={zoomIn} title="Zoom in (Ctrl+8)">+</button>
+        <button className={styles.zoomBtn} onClick={zoomIn} title="Zoom in">+</button>
         <div className={styles.zoomDivider} />
-        <button className={styles.zoomBtn} onClick={zoomFit} title="Fit to screen (Ctrl+5)">
+        <button className={styles.zoomBtn} onClick={zoomFit} title="Fit to screen">
           Fit
         </button>
       </div>

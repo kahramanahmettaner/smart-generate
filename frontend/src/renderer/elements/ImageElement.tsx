@@ -15,6 +15,7 @@ type Props = {
 function resolveSrc(
   src: ImageElement['props']['src'],
   getAsset: (id: string) => ImageAsset | undefined,
+  getAssetByName: (name: string) => ImageAsset | undefined,
   dataRow?: Record<string, string>
 ): string | null {
   if (src.type === 'none') return null
@@ -25,18 +26,39 @@ function resolveSrc(
 
   if (src.type === 'binding') {
     // Real data row value takes priority
-    const rowValue = dataRow?.[src.column]
-    if (rowValue) return rowValue
+    const rawValue = dataRow?.[src.column]
+    if (!rawValue) {
+      // No row value — use placeholder if set
+      if (src.placeholder?.assetId) {
+        return getAsset(src.placeholder.assetId)?.dataUrl ?? null
+      }
+      return null
+    }
 
-    // Fall back to placeholder asset if set
-    if (src.placeholder?.assetId) {
-      return getAsset(src.placeholder.assetId)?.dataUrl ?? null
+    // 1. Try matching by name in asset library (with and without extension)
+    const nameWithoutExt = stripExtension(rawValue.trim())
+
+    // Exact match first
+    const exactMatch = getAssetByName(rawValue.trim())
+    if (exactMatch) return exactMatch.dataUrl
+
+    // Match without extension (e.g. "hero" matches "hero.png" or "hero.jpg")
+    const partialMatch = getAssetByName(nameWithoutExt)
+    if (partialMatch) return partialMatch.dataUrl
+
+    // 2. Fall back to treating value as a direct URL
+    if (rawValue.startsWith('http') || rawValue.startsWith('data:')) {
+      return rawValue
     }
 
     return null
   }
 
   return null
+}
+
+function stripExtension(name: string): string {
+  return name.replace(/\.[^/.]+$/, '')
 }
 
 // Returns Konva crop params to simulate CSS object-fit behavior
@@ -116,11 +138,11 @@ type ImageStatus = 'unset' | 'missing' | 'loading' | 'ready'
 export function ImageElementRenderer({
   element, isSelected, onSelect, onChange, dataRow
 }: Props) {
-  const { getAsset }  = useAssetStore()
+  const { getAsset, getAssetByName }  = useAssetStore()
   const [img, setImg] = useState<HTMLImageElement | null>(null)
   const [status, setStatus] = useState<ImageStatus>('unset')
 
-  const resolvedSrc = resolveSrc(element.props.src, getAsset, dataRow)
+  const resolvedSrc = resolveSrc(element.props.src, getAsset, getAssetByName, dataRow)
 
   // Determine initial status based on src type
   const expectedSrc = element.props.src

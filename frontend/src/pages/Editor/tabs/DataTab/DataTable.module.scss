@@ -1,0 +1,245 @@
+@use '../../../../styles/variables' as *;
+
+.tableWrap {
+  flex: 1;
+  overflow: auto;
+  min-height: 0;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: $font-size-sm;
+}
+
+// ── Header ───────────────────────────────────────────────────────────────────
+
+.thIndex,
+.th,
+.thActions {
+  position: sticky;
+  top: 0;
+  background: var(--color-bg-secondary);
+  border-bottom: 2px solid var(--color-border-default);
+  z-index: 1;
+  padding: $space-2 $space-3;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.thIndex {
+  width: 48px;
+  color: var(--color-text-tertiary);
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  text-align: center;
+}
+
+.thActions { width: 36px; }
+
+.thContent {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.thLabel {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: var(--color-text-primary);
+}
+
+.thKey {
+  font-size: $font-size-xs;
+  font-family: $font-mono;
+  color: var(--color-text-tertiary);
+}
+
+// ── Rows ─────────────────────────────────────────────────────────────────────
+
+.tr {
+  border-bottom: 1px solid var(--color-border-subtle);
+  cursor: pointer;
+  transition: background $transition-fast;
+
+  &:hover {
+    background: var(--color-bg-hover);
+
+    .deleteRowBtn { opacity: 1; }
+  }
+
+  &.trSelected {
+    background: var(--color-accent-subtle);
+
+    &:hover { background: var(--color-accent-subtle); }
+
+    .cellValue { color: var(--color-text-primary); }
+  }
+}
+
+.tdIndex {
+  width: 48px;
+  padding: $space-1 $space-2;
+  text-align: center;
+  position: relative;
+}
+
+.rowNum {
+  font-size: $font-size-xs;
+  color: var(--color-text-tertiary);
+  font-family: $font-mono;
+}
+
+.selectedDot {
+  position: absolute;
+  left: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-accent);
+}
+
+.td {
+  padding: $space-1 $space-3;
+  max-width: 240px;
+  vertical-align: middle;
+
+  &.tdEditing {
+    padding: 0;
+  }
+}
+
+.cellValue {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--color-text-primary);
+  line-height: 32px;
+}
+
+.cellInput {
+  width: 100%;
+  height: 34px;
+  padding: 0 $space-3;
+  font-size: $font-size-sm;
+  font-family: inherit;
+  background: var(--color-bg-primary);
+  border: 2px solid var(--color-accent);
+  color: var(--color-text-primary);
+  outline: none;
+}
+
+.tdActions {
+  width: 36px;
+  padding: 0 $space-1;
+  text-align: center;
+}
+
+.deleteRowBtn {
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  border-radius: $radius-sm;
+  color: var(--color-text-tertiary);
+  opacity: 0;
+  transition: all $transition-fast;
+
+  &:hover {
+    background: var(--color-danger-subtle);
+    color: var(--color-danger);
+    opacity: 1 !important;
+  }
+}
+
+// ── Footer ───────────────────────────────────────────────────────────────────
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $space-2 $space-3;
+  background: var(--color-bg-primary);
+  border-top: 1px solid var(--color-border-subtle);
+  flex-shrink: 0;
+  gap: $space-3;
+}
+
+.footerLeft {
+  display: flex;
+  align-items: center;
+  gap: $space-3;
+}
+
+.footerRight {
+  display: flex;
+  align-items: center;
+}
+
+.addRowBtn {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: var(--color-accent);
+  padding: $space-1 $space-2;
+  border: 1px solid var(--color-accent);
+  border-radius: $radius-md;
+  transition: all $transition-fast;
+
+  &:hover {
+    background: var(--color-accent-subtle);
+  }
+}
+
+.selectedInfo {
+  font-size: $font-size-xs;
+  color: var(--color-accent-text);
+  background: var(--color-accent-subtle);
+  padding: 2px $space-2;
+  border-radius: $radius-full;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: $space-2;
+}
+
+.pageBtn {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--color-border-default);
+  border-radius: $radius-md;
+  font-size: $font-size-sm;
+  color: var(--color-text-secondary);
+  transition: all $transition-fast;
+
+  &:hover:not(:disabled) {
+    background: var(--color-bg-hover);
+    color: var(--color-text-primary);
+  }
+
+  &:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+}
+
+.pageInfo {
+  font-size: $font-size-sm;
+  color: var(--color-text-secondary);
+  min-width: 48px;
+  text-align: center;
+}
+
+.rowCount {
+  font-size: $font-size-xs;
+  color: var(--color-text-tertiary);
+}

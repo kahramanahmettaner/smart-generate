@@ -1,0 +1,241 @@
+@use '../../../styles/variables' as *;
+
+.tab {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  background: var(--color-bg-app);
+}
+
+// ── Toolbar ──────────────────────────────────────────────────────────────────
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: $space-4;
+  padding: 0 $space-5;
+  height: 52px;
+  background: var(--color-bg-primary);
+  border-bottom: 1px solid var(--color-border-subtle);
+  flex-shrink: 0;
+}
+
+.toolbarLeft,
+.toolbarRight {
+  display: flex;
+  align-items: center;
+  gap: $space-2;
+}
+
+.toolbarCenter {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: $space-3;
+  min-width: 0;
+}
+
+.importBtn {
+  display: flex;
+  align-items: center;
+  gap: $space-2;
+  height: 32px;
+  padding: 0 $space-4;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  background: var(--color-accent);
+  color: #ffffff;
+  border-radius: $radius-md;
+  border: none;
+  white-space: nowrap;
+  transition: background $transition-fast;
+
+  &:hover:not(:disabled) { background: var(--color-accent-hover); }
+  &:disabled { opacity: 0.6; cursor: not-allowed; }
+}
+
+.formatHint {
+  font-size: $font-size-xs;
+  color: var(--color-text-tertiary);
+  white-space: nowrap;
+}
+
+.datasetName {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: var(--color-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.datasetMeta {
+  font-size: $font-size-xs;
+  color: var(--color-text-tertiary);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.toolbarBtn {
+  height: 30px;
+  padding: 0 $space-3;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  border: 1px solid var(--color-border-default);
+  border-radius: $radius-md;
+  color: var(--color-text-secondary);
+  background: transparent;
+  white-space: nowrap;
+  transition: all $transition-fast;
+
+  &:hover {
+    background: var(--color-bg-hover);
+    color: var(--color-text-primary);
+  }
+
+  &.toolbarBtnDanger:hover {
+    background: var(--color-danger-subtle);
+    color: var(--color-danger);
+    border-color: var(--color-danger);
+  }
+}
+
+// ── Error bar ────────────────────────────────────────────────────────────────
+
+.errorBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $space-2 $space-5;
+  background: var(--color-danger-subtle);
+  border-bottom: 1px solid rgba(220, 38, 38, 0.2);
+  font-size: $font-size-sm;
+  color: var(--color-danger);
+  flex-shrink: 0;
+
+  button {
+    font-size: 12px;
+    color: var(--color-danger);
+    opacity: 0.6;
+
+    &:hover { opacity: 1; }
+  }
+}
+
+// ── Empty state ──────────────────────────────────────────────────────────────
+
+.emptyState {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background $transition-fast;
+
+  &.fileDragOver {
+    background: var(--color-accent-subtle);
+    outline: 2px dashed var(--color-accent);
+    outline-offset: -4px;
+  }
+}
+
+.emptyContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $space-3;
+  text-align: center;
+  max-width: 340px;
+}
+
+.emptyIcon {
+  font-size: 48px;
+  color: var(--color-text-tertiary);
+  line-height: 1;
+}
+
+.emptyTitle {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-medium;
+  color: var(--color-text-primary);
+}
+
+.emptyDesc {
+  font-size: $font-size-sm;
+  color: var(--color-text-tertiary);
+  line-height: $line-height-loose;
+}
+
+.emptyImportBtn {
+  height: 36px;
+  padding: 0 $space-5;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  background: var(--color-accent);
+  color: #ffffff;
+  border-radius: $radius-md;
+  border: none;
+  transition: background $transition-fast;
+
+  &:hover { background: var(--color-accent-hover); }
+}
+
+// ── Split layout ─────────────────────────────────────────────────────────────
+
+.splitLayout {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  min-height: 0;
+
+  &.isDragging {
+    cursor: col-resize;
+    user-select: none;
+  }
+}
+
+.previewPanel {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+  border-right: 1px solid var(--color-border-subtle);
+}
+
+.divider {
+  width: 6px;
+  flex-shrink: 0;
+  background: var(--color-bg-secondary);
+  border-right: 1px solid var(--color-border-subtle);
+  cursor: col-resize;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background $transition-fast;
+
+  &:hover {
+    background: var(--color-bg-active);
+
+    .dividerHandle { opacity: 1; }
+  }
+
+  &:active { background: var(--color-accent-subtle); }
+}
+
+.dividerHandle {
+  width: 3px;
+  height: 28px;
+  border-radius: $radius-full;
+  background: var(--color-border-strong);
+  opacity: 0.4;
+  transition: opacity $transition-fast;
+}
+
+.tablePanel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+  background: var(--color-bg-primary);
+}
