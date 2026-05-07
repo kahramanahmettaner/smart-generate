@@ -1,9 +1,9 @@
 import { create } from 'zustand'
 import { temporal } from 'zundo'
 import { generateId } from '../lib/utils'
-import type { Template, Element, ImageSrc, ImageElement } from '../types/template'
+import type { Template, Element, ImageElement } from '../types/template'
 import type { TemplateConfig } from '../components/TemplateConfigModal/TemplateConfigModal'
-import { useAssetStore } from './useAssetStore'
+import { resolveAssetIds } from '../lib/templateUtils'
 
 type EditorState = {
   template:   Template
@@ -144,62 +144,3 @@ export const useEditorStore = create<EditorState>()(
     }
   )
 )
-
-// helper — resolves assetIds by name in the loaded template
-function resolveAssetIds(template: Template): Template {
-  const { getAssetByName } = useAssetStore.getState()
-
-  const resolveImageSrc = (src: ImageSrc): ImageSrc => {
-    if (src.type === 'asset') {
-      const local = getAssetByName(src.assetName)
-      if (local) {
-        // Found locally by name — update ID to local ID
-        return { ...src, assetId: local.id }
-      }
-      // Not found — keep reference as-is, will show missing state
-      return src
-    }
-
-    if (src.type === 'binding' && src.placeholder) {
-      const local = getAssetByName(src.placeholder.assetName)
-      if (local) {
-        return {
-          ...src,
-          placeholder: { ...src.placeholder, assetId: local.id }
-        }
-      }
-      return src
-    }
-
-    return src
-  }
-
-  return {
-    ...template,
-    elements: template.elements.map((el) => {
-      if (el.type !== 'image') return el
-      const imgEl = el as ImageElement
-      return {
-        ...imgEl,
-        props: {
-          ...imgEl.props,
-          src: resolveImageSrc(imgEl.props.src)
-        }
-      }
-    })
-  }
-}
-
-// ─── History hook ────────────────────────────────────────────────────────────
-
-export function useHistory() {
-  const { undo, redo, pastStates, futureStates } =
-    useEditorStore.temporal.getState()
-
-  return {
-    undo,
-    redo,
-    canUndo: pastStates.length  > 0,
-    canRedo: futureStates.length > 0,
-  }
-}

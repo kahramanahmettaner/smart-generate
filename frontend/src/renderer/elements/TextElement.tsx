@@ -1,6 +1,6 @@
 import { Text } from 'react-konva'
 import type { TextElement } from '../../types/template'
-import { resolve } from '../../types/template'
+import { resolve } from '../../lib/templateUtils'
 
 type Props = {
   element: TextElement

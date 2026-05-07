@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import type Konva from 'konva'
-import { useEditorStore, useHistory } from '../../../store/useEditorStore'
+import { useEditorStore } from '../../../store/useEditorStore'
+import { useHistory } from '../../../hooks/useHistory'
 import { useKeyboard } from '../../../hooks/useKeyboard'
 import { EditorCanvas } from '../../../editor/EditorCanvas'
 import type { EditorCanvasHandle } from '../../../editor/EditorCanvasHandle'

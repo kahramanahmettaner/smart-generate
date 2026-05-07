@@ -16,15 +16,6 @@ export type BindableNumber =
   | { type: 'static'; value: number }
   | { type: 'binding'; column: string }
 
-// Resolve a bindable value against a data row
-export function resolve<T>(
-  bindable: { type: 'static'; value: T } | { type: 'binding'; column: string },
-  row?: Record<string, string>
-): T | string {
-  if (bindable.type === 'static') return bindable.value
-  return row?.[bindable.column] ?? `{{${bindable.column}}}`
-}
-
 export type BaseElement = {
   id: string
   x: number

@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
-import { useAssetStore, fitDimensions } from '../../store/useAssetStore'
+import { useAssetStore } from '../../store/useAssetStore'
+import { fitDimensions } from '../../lib/imageUtils'
 import type { ImageAsset } from '../../types/asset'
 import styles from './AssetPickerModal.module.scss'
 import { useEditorStore } from '../../store/useEditorStore'
