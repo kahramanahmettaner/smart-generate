@@ -42,7 +42,8 @@ export function ToolPanel({ activeTool, onToolChange }: Props) {
           stroke: '#6366F1',
           strokeWidth: 2,
           cornerRadius: 4,
-        }
+        },
+        aspectRatioLocked: false,
       }
       addElement(el)
       selectElement(el.id)
@@ -65,7 +66,8 @@ export function ToolPanel({ activeTool, onToolChange }: Props) {
           fontWeight: 'normal',
           align: 'left',
           lineHeight: 1.4,
-        }
+        },
+        aspectRatioLocked: false,
       }
       addElement(el)
       selectElement(el.id)
