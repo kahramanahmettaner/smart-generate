@@ -1,0 +1,306 @@
+@use '../../../styles/variables' as *;
+
+.tab {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  background: var(--color-bg-app);
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 0;
+  flex: 1;
+  overflow: hidden;
+}
+
+// ── Panels ───────────────────────────────────────────────────────────────────
+
+.configPanel,
+.renderPanel {
+  display: flex;
+  flex-direction: column;
+  gap: $space-4;
+  padding: $space-5;
+  overflow-y: auto;
+}
+
+.configPanel {
+  background: var(--color-bg-primary);
+  border-right: 1px solid var(--color-border-subtle);
+}
+
+.renderPanel {
+  background: var(--color-bg-app);
+}
+
+.panelTitle {
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-tertiary);
+  margin-bottom: $space-1;
+}
+
+// ── Fields ───────────────────────────────────────────────────────────────────
+
+.fieldGroup {
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+}
+
+.fieldLabel {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: var(--color-text-secondary);
+}
+
+.fieldHint {
+  font-size: $font-size-xs;
+  color: var(--color-text-tertiary);
+  line-height: $line-height-base;
+
+  code {
+    font-family: $font-mono;
+    font-size: $font-size-xs;
+    background: var(--color-bg-tertiary);
+    padding: 1px 4px;
+    border-radius: $radius-sm;
+  }
+}
+
+.segmented {
+  display: flex;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border-default);
+  border-radius: $radius-md;
+  padding: 2px;
+  gap: 2px;
+}
+
+.segBtn {
+  flex: 1;
+  height: 28px;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  border-radius: calc($radius-md - 2px);
+  color: var(--color-text-secondary);
+  transition: all $transition-fast;
+
+  &:hover { color: var(--color-text-primary); }
+
+  &.segBtnActive {
+    background: var(--color-bg-primary);
+    color: var(--color-text-primary);
+    box-shadow: var(--shadow-sm);
+  }
+}
+
+.slider {
+  width: 100%;
+  accent-color: var(--color-accent);
+  cursor: pointer;
+}
+
+.sliderLabels {
+  display: flex;
+  justify-content: space-between;
+  font-size: $font-size-xs;
+  color: var(--color-text-tertiary);
+}
+
+.namingRow {
+  display: flex;
+  gap: $space-2;
+}
+
+.select {
+  flex: 1;
+  height: 32px;
+  padding: 0 $space-2;
+  font-size: $font-size-sm;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border-default);
+  border-radius: $radius-md;
+  color: var(--color-text-primary);
+
+  &:focus { outline: none; border-color: var(--color-accent); }
+}
+
+.prefixRow {
+  display: flex;
+  align-items: center;
+  gap: $space-2;
+}
+
+.input {
+  width: 120px;
+  height: 32px;
+  padding: 0 $space-2;
+  font-size: $font-size-sm;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border-default);
+  border-radius: $radius-md;
+  color: var(--color-text-primary);
+
+  &:focus { outline: none; border-color: var(--color-accent); }
+}
+
+.prefixPreview {
+  font-size: $font-size-xs;
+  font-family: $font-mono;
+  color: var(--color-text-tertiary);
+}
+
+// ── Summary box ──────────────────────────────────────────────────────────────
+
+.summaryBox {
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: $radius-lg;
+  padding: $space-3;
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+}
+
+.summaryRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: $space-3;
+}
+
+.summaryLabel {
+  font-size: $font-size-xs;
+  color: var(--color-text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.summaryValue {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: var(--color-text-primary);
+}
+
+.summaryMissing {
+  color: var(--color-warning);
+}
+
+// ── Render button + progress ─────────────────────────────────────────────────
+
+.renderBtn {
+  width: 100%;
+  height: 44px;
+  font-size: $font-size-base;
+  font-weight: $font-weight-medium;
+  background: var(--color-accent);
+  color: #ffffff;
+  border-radius: $radius-lg;
+  border: none;
+  transition: background $transition-fast;
+
+  &:hover:not(:disabled) { background: var(--color-accent-hover); }
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.noDatasetHint {
+  font-size: $font-size-sm;
+  color: var(--color-text-tertiary);
+  text-align: center;
+}
+
+.progressBlock {
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: $radius-lg;
+  padding: $space-3;
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+}
+
+.progressHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.progressMessage {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: var(--color-text-primary);
+}
+
+.progressCount {
+  font-size: $font-size-xs;
+  font-family: $font-mono;
+  color: var(--color-text-tertiary);
+}
+
+.progressBarWrap {
+  height: 4px;
+  background: var(--color-bg-tertiary);
+  border-radius: $radius-full;
+  overflow: hidden;
+}
+
+.progressBar {
+  height: 100%;
+  background: var(--color-accent);
+  border-radius: $radius-full;
+  transition: width 200ms ease;
+
+  &.progressBarDone  { background: var(--color-success); }
+  &.progressBarError { background: var(--color-danger);  }
+}
+
+.doneMsg {
+  font-size: $font-size-sm;
+  color: var(--color-success);
+  font-weight: $font-weight-medium;
+}
+
+.errorMsg {
+  font-size: $font-size-sm;
+  color: var(--color-danger);
+}
+
+.logBlock {
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: $radius-lg;
+  padding: $space-2;
+  max-height: 300px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.logRow {
+  display: flex;
+  align-items: center;
+  gap: $space-2;
+  padding: 2px $space-1;
+}
+
+.logDone {
+  font-size: 11px;
+  color: var(--color-success);
+  flex-shrink: 0;
+}
+
+.logName {
+  font-size: $font-size-xs;
+  font-family: $font-mono;
+  color: var(--color-text-secondary);
+}

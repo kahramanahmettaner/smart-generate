@@ -10,6 +10,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "jspdf": "^4.2.1",
+    "jszip": "^3.10.1",
     "konva": "^10.3.0",
     "nanoid": "^5.1.11",
     "papaparse": "^5.5.3",
@@ -23,6 +25,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@types/jszip": "^3.4.0",
     "@types/node": "^24.12.2",
     "@types/papaparse": "^5.5.2",
     "@types/react": "^19.2.14",
