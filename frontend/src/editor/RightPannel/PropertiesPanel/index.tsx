@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useEditorStore } from '../../../store/useEditorStore'
-import { AssetPickerModal } from '../../AssetPicker/AssetPickerModal'
+import { AssetPickerModal } from '../../../components/AssetPickerModal/AssetPickerModal'
 import { TransformSection }  from './sections/TransformSection'
 import { RectProperties }    from './sections/RectProperties'
 import { TextProperties }    from './sections/TextProperties'

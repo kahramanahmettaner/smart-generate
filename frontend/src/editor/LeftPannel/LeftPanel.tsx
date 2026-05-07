@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import styles from './LeftPanel.module.scss'
 import { useEditorStore } from '../../store/useEditorStore'
-import { AssetPickerModal } from '../AssetPicker/AssetPickerModal'
+import { AssetPickerModal } from '../../components/AssetPickerModal/AssetPickerModal'
 import { generateId } from '../../lib/utils'
 import type { RectElement, TextElement, ImageElement } from '../../types/template'
 import type { ImageAsset } from '../../types/asset'
