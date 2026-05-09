@@ -2,9 +2,8 @@ import { useState } from 'react'
 import styles from './LeftPanel.module.scss'
 import { useEditorStore } from '../../store/useEditorStore'
 import { AssetPickerModal } from '../../components/AssetPickerModal/AssetPickerModal'
-import { generateId } from '../../lib/utils'
-import type { RectElement, TextElement, ImageElement } from '../../types/template'
 import type { ImageAsset } from '../../types/asset'
+import { createImageElement, createRectElement, createTextElement } from '../../lib/elementDefaults'
 
 type Tool = 'select' | 'rect' | 'text' | 'image'
 
@@ -31,37 +30,14 @@ export function LeftPanel({ activeTool, onToolChange, canvasWidth, canvasHeight 
     onToolChange(tool)
 
     if (tool === 'rect') {
-      const el: RectElement = {
-        id: generateId('rect'),
-        type: 'rect',
-        x: 100, y: 100,
-        width: 200, height: 150,
-        rotation: 0, opacity: 1,
-        visible: true, locked: false,
-        props: { fill: '#E0E7FF', stroke: '#6366F1', strokeWidth: 2, cornerRadius: 4 },
-        aspectRatioLocked: false,
-      }
+      const el = createRectElement()
       addElement(el)
       selectElement(el.id)
       onToolChange('select')
     }
 
     if (tool === 'text') {
-      const el: TextElement = {
-        id: generateId('text'),
-        type: 'text',
-        x: 100, y: 100,
-        width: 300, height: 50,
-        rotation: 0, opacity: 1,
-        visible: true, locked: false,
-        props: {
-          content: { type: 'static', value: 'Text' },
-          fontSize: 24, fontFamily: 'Inter',
-          color: '#111111', fontWeight: 'normal',
-          align: 'left', lineHeight: 1.4,
-        },
-        aspectRatioLocked: false,
-      }
+      const el = createTextElement()
       addElement(el)
       selectElement(el.id)
       onToolChange('select')
@@ -69,20 +45,7 @@ export function LeftPanel({ activeTool, onToolChange, canvasWidth, canvasHeight 
 
     if (tool === 'image') {
       // Add placeholder first, then open picker
-      const el: ImageElement = {
-        id: generateId('img'),
-        type: 'image',
-        x: 100, y: 100,
-        width: 300, height: 200,
-        rotation: 0, opacity: 1,
-        visible: true, locked: false,
-        props: {
-          src:   { type: 'none' },
-          fit:   'cover',
-          align: { horizontal: 'center', vertical: 'center' }
-        },
-        aspectRatioLocked: false,
-      }
+      const el = createImageElement()
       addElement(el)
       selectElement(el.id)
       setPendingImageId(el.id)
