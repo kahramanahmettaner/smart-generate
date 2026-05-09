@@ -1,8 +1,9 @@
-import JSZip from 'jszip'
-import type { RenderConfig, RenderJob, RenderProgress } from '../types/render'
+import type { RenderConfig, RenderProgress } from '../types/render'
 import type { Template } from '../types/template'
 import type { DataRow } from '../types/dataset'
 import type { ImageAsset } from '../types/asset'
+import { packagePdf, packageZip } from './renderPackage'
+import { buildFileName } from './renderFilename'
 
 type ProgressCallback = (progress: RenderProgress) => void
 
@@ -83,82 +84,11 @@ export async function runRenderJob(
 
   if (config.output === 'pdf') {
     onProgress({ status: 'packaging', current: total, total, message: 'Building PDF…' })
-    await packagePdf(blobs, template.name, template.canvas.width, template.canvas.height, config.pixelRatio)
+    await packagePdf(blobs, template.name, template.canvas.width, template.canvas.height)
   }
 
   onProgress({ status: 'done', current: total, total, message: `${total} images rendered` })
 }
 
-function buildFileName(
-  row:    Record<string, string>,
-  config: RenderConfig,
-  index:  number
-): string {
-  const ext  = config.format === 'jpg' ? 'jpg' : 'png'
-  const base = config.fileNameColumn && row[config.fileNameColumn]
-    ? sanitizeFileName(row[config.fileNameColumn])
-    : `${config.fileNamePrefix}_${String(index + 1).padStart(4, '0')}`
-  return `${base}.${ext}`
-}
 
-function sanitizeFileName(name: string): string {
-  return name.replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 100)
-}
 
-async function packageZip(
-  blobs:    { name: string; blob: Blob }[],
-  baseName: string
-): Promise<void> {
-  const zip = new JSZip()
-  blobs.forEach(({ name, blob }) => zip.file(name, blob))
-  const zipBlob = await zip.generateAsync({
-    type:               'blob',
-    compression:        'DEFLATE',
-    compressionOptions: { level: 6 },
-  })
-  downloadBlob(zipBlob, `${baseName}.zip`)
-}
-
-async function packagePdf(
-  blobs:     { name: string; blob: Blob }[],
-  baseName:  string,
-  canvasW:   number,
-  canvasH:   number,
-  pixelRatio: number
-): Promise<void> {
-  // Use jsPDF for PDF packaging
-  const { jsPDF } = await import('jspdf')
-  const w   = canvasW
-  const h   = canvasH
-  const pdf = new jsPDF({
-    orientation: w > h ? 'landscape' : 'portrait',
-    unit:        'px',
-    format:      [w, h],
-  })
-
-  for (let i = 0; i < blobs.length; i++) {
-    if (i > 0) pdf.addPage([w, h], w > h ? 'landscape' : 'portrait')
-    const dataUrl = await blobToDataUrl(blobs[i].blob)
-    pdf.addImage(dataUrl, 'PNG', 0, 0, w, h)
-  }
-
-  pdf.save(`${baseName}.pdf`)
-}
-
-function blobToDataUrl(blob: Blob): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader   = new FileReader()
-    reader.onload  = () => resolve(reader.result as string)
-    reader.onerror = reject
-    reader.readAsDataURL(blob)
-  })
-}
-
-function downloadBlob(blob: Blob, name: string): void {
-  const url = URL.createObjectURL(blob)
-  const a   = document.createElement('a')
-  a.download = name
-  a.href     = url
-  a.click()
-  URL.revokeObjectURL(url)
-}
