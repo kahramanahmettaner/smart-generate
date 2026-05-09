@@ -1,11 +1,11 @@
 import { useRef, useState, useCallback } from 'react'
-import { useDatasetStore }  from '../../../store/useDatasetStore'
-import { useEditorStore }   from '../../../store/useEditorStore'
-import { importFile, exportDatasetAsCsv } from '../../../lib/importData'
-import { DataTable } from './DataTab/DataTable'
-import { DataPreviewCanvas } from './DataTab/DataPreviewCanvas'
-import { useConfirm }       from '../../../hooks/useConfirm'
-import { ConfirmDialog }    from '../../../components/ConfirmDialog/ConfirmDialog'
+import { useDatasetStore } from '../../../../store/useDatasetStore'
+import { useEditorStore } from '../../../../store/useEditorStore'
+import { importFile, exportDatasetAsCsv } from '../../../../lib/importData'
+import { DataTable } from './DataTable'
+import { DataPreviewCanvas } from './DataPreviewCanvas'
+import { useConfirm }       from '../../../../hooks/useConfirm'
+import { ConfirmDialog }    from '../../../../components/ConfirmDialog/ConfirmDialog'
 import styles from './DataTab.module.scss'
 
 const MIN_PANEL = 280

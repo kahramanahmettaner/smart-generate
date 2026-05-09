@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback } from 'react'
-import { useAssetStore } from '../../../store/useAssetStore'
-import type { ImageAsset } from '../../../types/asset'
-import { AssetDetailModal } from './AssetsTab/AssetDetailModal'
+import { useAssetStore } from '../../../../store/useAssetStore'
+import type { ImageAsset } from '../../../../types/asset'
+import { AssetDetailModal } from './AssetDetailModal'
 import styles from './AssetsTab.module.scss'
 
 type ViewMode = 'grid' | 'list'

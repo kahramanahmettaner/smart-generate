@@ -1,9 +1,9 @@
 import { useState, useCallback } from 'react'
-import { useEditorStore }   from '../../../store/useEditorStore'
-import { useDatasetStore }  from '../../../store/useDatasetStore'
-import { useAssetStore }    from '../../../store/useAssetStore'
-import { runRenderJob }     from '../../../lib/renderEngine'
-import type { RenderConfig, RenderProgress } from '../../../types/render'
+import { useEditorStore }   from '../../../../store/useEditorStore'
+import { useDatasetStore }  from '../../../../store/useDatasetStore'
+import { useAssetStore }    from '../../../../store/useAssetStore'
+import { runRenderJob }     from '../../../../lib/renderEngine'
+import type { RenderConfig, RenderProgress } from '../../../../types/render'
 import styles from './RenderTab.module.scss'
 
 const DEFAULT_CONFIG: RenderConfig = {
