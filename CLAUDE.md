@@ -25,17 +25,20 @@
 
 ```
 /
-├── frontend/          ← entire current frontend application (Vite + React + TS)
-│   ├── src/
-│   ├── public/
-│   ├── index.html
-│   ├── vite.config.ts
-│   ├── tsconfig.json
-│   └── package.json
-├── backend/           ← Node.js + Fastify backend (to be built)
-│   └── (see Backend section below)
-├── docker-compose.yml ← runs Postgres + Redis for local development
-└── CLAUDE.md          ← this file
+├── .gitignore             ← OS + editor ignores (covers whole repo)
+├── docker-compose.yml     ← runs Postgres 17 + Redis 8 for local dev
+├── CLAUDE.md              ← this file
+├── frontend/
+│   ├── .gitignore         ← frontend-specific ignores
+│   └── src/               ← (see Frontend section below)
+└── backend/               ← ✅ Phase 1 complete
+    ├── .gitignore
+    ├── .env               ← local env (git-ignored)
+    ├── .env.example       ← committed template with all required keys
+    ├── package.json
+    ├── tsconfig.json
+    ├── drizzle.config.ts
+    └── src/               ← (see Backend section below)
 ```
 
 ---
@@ -212,7 +215,15 @@ type ImageAsset = {
 
 ## Backend Architecture
 
-### Status: 📋 Planned — not yet implemented
+### Status: 🚧 In Progress
+
+| Phase | Status |
+|---|---|
+| Phase 1 — Scaffold + Auth + Projects | ✅ Complete |
+| Phase 2 — Core Data APIs | 🔜 Next |
+| Phase 3 — Frontend Integration | ⏳ Planned |
+| Phase 4 — Server-Side Rendering | ⏳ Planned |
+| Phase 5 — Async Batch Queue | ⏳ Planned |
 
 ### Tech Stack
 
@@ -221,7 +232,7 @@ type ImageAsset = {
 | Runtime | Node.js + TypeScript |
 | Framework | Fastify |
 | ORM | Drizzle ORM |
-| Database | PostgreSQL 16 |
+| Database | PostgreSQL 17 |
 | Auth | Google OAuth 2.0 + JWT in HTTP-only cookie |
 | File Storage | Local disk (dev) → Cloudflare R2 (production) |
 | Queue (Phase 4) | BullMQ + Redis |
@@ -450,7 +461,7 @@ In production: swap implementation to Cloudflare R2 (S3-compatible). No other co
 
 ### Auth Strategy
 
-- Google OAuth 2.0 via `@fastify/oauth2`
+- Google OAuth 2.0 implemented manually (native fetch — no @fastify/oauth2 plugin needed)
 - On callback: upsert user in DB, sign JWT, set as HTTP-only cookie (`sameSite: lax`, `secure: true` in prod)
 - Stateless JWT — no server-side session storage needed until Phase 5 (Redis arrives for BullMQ anyway)
 - `requireAuth` hook: verify JWT from cookie, attach `req.user = { id, email, name }` to request
@@ -707,7 +718,15 @@ docker compose down -v  # stop + wipe data
 - [ ] Column mapping UI (visual binding between dataset columns and elements)
 
 ### Backend
-- [ ] **Phase 1:** Scaffold + Docker + Auth + Projects CRUD
+- [x] **Phase 1:** Scaffold + Docker + Auth + Projects CRUD
+  - [x] docker-compose.yml (Postgres 17 + Redis 8)
+  - [x] Fastify app, TypeScript config, env setup
+  - [x] Drizzle schema (users, projects, templates, assets, datasets, render_jobs)
+  - [x] Google OAuth flow → JWT in HTTP-only cookie
+  - [x] `/auth/google`, `/auth/google/callback`, `/auth/logout`, `/auth/me`
+  - [x] `/projects` CRUD (list, create, get, rename, delete)
+  - [x] `requireAuth` middleware, typed error classes
+  - [x] `.gitignore` files (root + backend)
 - [ ] **Phase 2:** Templates, Assets (local disk), Datasets APIs
 - [ ] **Phase 3:** Frontend integration (replace localStorage with API)
 - [ ] **Phase 4:** Server-side rendering (`@napi-rs/canvas`)
