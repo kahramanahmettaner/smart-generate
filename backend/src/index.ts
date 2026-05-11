@@ -1,14 +1,17 @@
-import "dotenv/config";
-import Fastify from 'fastify'
+import "dotenv/config"
+import Fastify, { FastifyError, FastifyRequest, FastifyReply } from 'fastify'
 import cookie from '@fastify/cookie'
 import cors from '@fastify/cors'
+import multipart from '@fastify/multipart'
 import { config } from './config.js'
 import { connectDb } from './db/client.js'
 import { AppError } from './lib/errors.js'
 import { authRoutes } from './auth/google.js'
 import { usersRoutes } from './modules/users/users.routes.js'
 import { projectsRoutes } from './modules/projects/projects.routes.js'
-import { FastifyError, FastifyRequest, FastifyReply } from 'fastify'
+import { templatesRoutes } from "./modules/templates/templates.routes.js"
+import { assetsRoutes } from './modules/assets/assets.routes.js'
+import { datasetsRoutes } from "./modules/data/datasets.routes.js"
 
 async function buildApp() {
   const app = Fastify({
@@ -29,11 +32,20 @@ async function buildApp() {
 
   await app.register(cookie)
 
+  await app.register(multipart, {
+    limits: {
+      fileSize: 20 * 1024 * 1024, // 20MB max (datasets can be larger than images)
+    },
+  })
+
   // ── Routes ───────────────────────────────────────────────────────────────────
 
   await app.register(authRoutes)
   await app.register(usersRoutes)
   await app.register(projectsRoutes)
+  await app.register(templatesRoutes)
+  await app.register(assetsRoutes)
+  await app.register(datasetsRoutes)
 
   // ── Health check ─────────────────────────────────────────────────────────────
 

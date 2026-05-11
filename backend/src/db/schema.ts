@@ -53,7 +53,7 @@ export const templatesRelations = relations(templates, ({ one }) => ({
 export const assets = pgTable('assets', {
   id:         uuid('id').primaryKey().defaultRandom(),
   projectId:  uuid('project_id').references(() => projects.id, { onDelete: 'cascade' }).notNull(),
-  name:       text('name').notNull(),       // unique per project, enforced in service
+  name:       text('name').notNull(),        // unique per project, enforced in service
   storageKey: text('storage_key').notNull(), // local path or R2 object key
   url:        text('url').notNull(),         // served URL or signed R2 URL
   width:      integer('width'),
@@ -68,16 +68,18 @@ export const assetsRelations = relations(assets, ({ one }) => ({
 }))
 
 // ─── Datasets ─────────────────────────────────────────────────────────────────
+// Rows are stored as a JSON file on disk (not in DB) to handle large datasets
+// efficiently. Only metadata + columns live in the DB.
 
 export const datasets = pgTable('datasets', {
-  id:        uuid('id').primaryKey().defaultRandom(),
-  projectId: uuid('project_id').references(() => projects.id, { onDelete: 'cascade' }).notNull(),
-  name:      text('name').notNull(),
-  columns:   jsonb('columns').notNull(),  // [{ key: string, label: string }]
-  rows:      jsonb('rows').notNull(),     // [{ col1: val, col2: val, ... }]
-  rowCount:  integer('row_count').notNull().default(0),
-  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  id:         uuid('id').primaryKey().defaultRandom(),
+  projectId:  uuid('project_id').references(() => projects.id, { onDelete: 'cascade' }).notNull(),
+  name:       text('name').notNull(),
+  storageKey: text('storage_key').notNull(), // e.g. "projects/abc/datasets/xyz.json"
+  columns:    jsonb('columns').notNull(),    // [{ key, label }] — small, fine in DB
+  rowCount:   integer('row_count').notNull().default(0),
+  createdAt:  timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt:  timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 })
 
 export const datasetsRelations = relations(datasets, ({ one }) => ({

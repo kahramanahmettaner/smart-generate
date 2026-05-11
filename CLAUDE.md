@@ -220,8 +220,8 @@ type ImageAsset = {
 | Phase | Status |
 |---|---|
 | Phase 1 — Scaffold + Auth + Projects | ✅ Complete |
-| Phase 2 — Core Data APIs | 🔜 Next |
-| Phase 3 — Frontend Integration | ⏳ Planned |
+| Phase 2 — Core Data APIs | ✅ Complete |
+| Phase 3 — Frontend Integration | 🔜 Next |
 | Phase 4 — Server-Side Rendering | ⏳ Planned |
 | Phase 5 — Async Batch Queue | ⏳ Planned |
 
@@ -333,16 +333,17 @@ assets
   mime_type   TEXT
   created_at  TIMESTAMPTZ DEFAULT now()
 
--- Datasets (CSV/Excel uploaded, converted to JSON rows)
+-- Datasets (CSV/Excel uploaded, rows stored as JSON file on disk)
 datasets
   id          UUID PRIMARY KEY DEFAULT gen_random_uuid()
   project_id  UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE
   name        TEXT NOT NULL
-  columns     JSONB NOT NULL              ← [{ key, label }]
-  rows        JSONB NOT NULL              ← [{ col1: val, col2: val, ... }]
-  row_count   INT NOT NULL DEFAULT 0
+  storage_key TEXT NOT NULL               ← path to JSON file: "projects/<id>/datasets/<id>.json"
+  columns     JSONB NOT NULL              ← [{ key, label }] — small, stays in DB for fast list queries
+  row_count   INT NOT NULL DEFAULT 0      ← cached count, no need to load file just to show count
   created_at  TIMESTAMPTZ DEFAULT now()
   updated_at  TIMESTAMPTZ DEFAULT now()
+-- NOTE: rows are NOT stored in DB — loaded from disk file on demand via getDataset()
 
 -- Render Jobs (Phase 4)
 render_jobs
@@ -392,7 +393,8 @@ Assets
   GET    /projects/:pid/assets             → list assets (metadata only)
   POST   /projects/:pid/assets             → upload image (multipart/form-data)
   DELETE /projects/:pid/assets/:id         → delete asset + file
-  GET    /assets/file/:key                 → serve file (local) or redirect (R2 signed URL)
+  GET    /files/*                          → serve file (local, auth + ownership required)
+                                               TODO: remove when R2 is set up
 
 Datasets
   GET    /projects/:pid/datasets           → list datasets
@@ -448,7 +450,7 @@ Render (Phase 3+)
 
 ### Storage Abstraction
 
-`backend/src/modules/assets/storage.ts` exposes only two functions:
+`backend/src/modules/assets/storage.ts` exposes only three functions:
 
 ```ts
 writeFile(key: string, buffer: Buffer, mimeType: string): Promise<string> // returns served URL
@@ -456,8 +458,24 @@ readFile(key: string): Promise<Buffer>
 deleteFile(key: string): Promise<void>
 ```
 
-In Phase 1–3: backed by local disk under `STORAGE_PATH` env var.
+In Phase 1–2: backed by local disk under `STORAGE_PATH` env var (`./uploads` by default).
 In production: swap implementation to Cloudflare R2 (S3-compatible). No other code changes.
+
+**Disk folder structure:**
+```
+uploads/
+└── projects/
+    └── <project-id>/
+        ├── assets/
+        │   ├── hero.png
+        │   └── logo.webp
+        └── datasets/
+            └── <dataset-id>.json    ← parsed rows as JSON array
+```
+
+**Storage keys follow the folder structure** (e.g. `projects/<id>/assets/hero.png`).
+The `/files/*` route serves local files with auth + ownership check.
+**TODO:** when R2 is set up — remove `/files/*` route, `writeFile` returns signed R2 URL instead.
 
 ### Auth Strategy
 
@@ -727,7 +745,17 @@ docker compose down -v  # stop + wipe data
   - [x] `/projects` CRUD (list, create, get, rename, delete)
   - [x] `requireAuth` middleware, typed error classes
   - [x] `.gitignore` files (root + backend)
-- [ ] **Phase 2:** Templates, Assets (local disk), Datasets APIs
+- [x] **Phase 2:** Core Data APIs
+  - [x] Templates CRUD (`/projects/:pid/templates`) — Konva JSON stored as JSONB
+  - [x] Assets upload/list/delete (`/projects/:pid/assets`) — files on disk under `uploads/projects/<id>/assets/`
+  - [x] Asset file serving (`/files/*`) — auth + ownership check, marked TODO for R2 removal
+  - [x] Datasets upload/list/get/delete (`/projects/:pid/datasets`) — CSV/Excel parsed server-side
+  - [x] Dataset rows stored as JSON files on disk (`uploads/projects/<id>/datasets/<id>.json`)
+  - [x] Dataset columns metadata kept in DB (fast list queries without loading rows)
+  - [x] `storage.ts` abstraction — `writeFile`/`readFile`/`deleteFile` (local now, R2-ready)
+  - [x] `papaparse` + `xlsx` for CSV/Excel parsing (same libs as frontend)
+  - [x] Consistent folder structure: `assets/` and `datasets/` subfolders per project
+  - [x] URL scheme: `/files/projects/<id>/assets/<filename>`
 - [ ] **Phase 3:** Frontend integration (replace localStorage with API)
 - [ ] **Phase 4:** Server-side rendering (`@napi-rs/canvas`)
 - [ ] **Phase 5:** Async batch queue (BullMQ + Redis workers)

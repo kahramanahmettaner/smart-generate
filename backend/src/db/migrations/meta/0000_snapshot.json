@@ -1,5 +1,5 @@
 {
-  "id": "f5207e30-cad8-4e1f-a7dd-db3f51224d5c",
+  "id": "aba7a635-e8ad-4177-aa5b-2599869a0e37",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "6",
   "dialect": "postgresql",
@@ -113,14 +113,14 @@
           "primaryKey": false,
           "notNull": true
         },
-        "columns": {
-          "name": "columns",
-          "type": "jsonb",
+        "storage_key": {
+          "name": "storage_key",
+          "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "rows": {
-          "name": "rows",
+        "columns": {
+          "name": "columns",
           "type": "jsonb",
           "primaryKey": false,
           "notNull": true

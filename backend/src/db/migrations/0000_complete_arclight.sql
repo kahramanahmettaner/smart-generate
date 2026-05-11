@@ -15,8 +15,8 @@ CREATE TABLE IF NOT EXISTS "datasets" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"project_id" uuid NOT NULL,
 	"name" text NOT NULL,
+	"storage_key" text NOT NULL,
 	"columns" jsonb NOT NULL,
-	"rows" jsonb NOT NULL,
 	"row_count" integer DEFAULT 0 NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
