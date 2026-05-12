@@ -5,8 +5,15 @@ export type DataColumn = {
 }
 
 export type Dataset = {
-  columns:  DataColumn[]
-  rows:     DataRow[]
-  fileName: string
-  importedAt: number
+  id:        string
+  projectId: string
+  name:      string
+  columns:   DataColumn[]
+  rows:      DataRow[]
+  rowCount:  number
+  createdAt: string
+  updatedAt: string
 }
+
+// Summary version returned by list endpoint (no rows)
+export type DatasetSummary = Omit<Dataset, 'rows'>

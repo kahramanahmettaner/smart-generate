@@ -29,7 +29,7 @@ type EditorState = {
   syncAssetName:      (oldName: string, newName: string) => void
 
   // Backend context
-  setProjectContext: (projectId: string, templateId: string) => void
+  setProjectContext: (projectId: string | null, templateId: string | null) => void
 }
 
 const defaultTemplate: Template = {

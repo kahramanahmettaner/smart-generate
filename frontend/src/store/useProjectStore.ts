@@ -1,5 +1,8 @@
 import { create } from 'zustand'
 import { projectsApi, type ApiProject } from '../lib/api'
+import { useAssetStore }   from './useAssetStore'
+import { useDatasetStore } from './useDatasetStore'
+import { useEditorStore }  from './useEditorStore'
 
 type ProjectState = {
   projects:       ApiProject[]
@@ -15,7 +18,7 @@ type ProjectState = {
   selectProject:    (project: ApiProject | null) => void
 }
 
-export const useProjectStore = create<ProjectState>((set) => ({
+export const useProjectStore = create<ProjectState>((set, get) => ({
   projects:       [],
   currentProject: null,
   loading:        false,
@@ -54,6 +57,19 @@ export const useProjectStore = create<ProjectState>((set) => ({
   },
 
   selectProject: (project) => {
+    const current = get().currentProject
+
+    // Only clear state if actually switching to a different project
+    if (current?.id !== project?.id) {
+      useAssetStore.getState().clearAssets()
+      useDatasetStore.getState().clearDataset()
+      useDatasetStore.getState().clearDatasetList()
+      useEditorStore.getState().setProjectContext(
+        project?.id ?? null,
+        null,
+      )
+    }
+
     set({ currentProject: project })
   },
 }))

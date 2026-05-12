@@ -31,6 +31,7 @@ type AssetState = {
   renameAsset:      (id: string, newName: string)         => void   // local only — no rename endpoint yet
   getAsset:         (id: string)                          => ImageAsset | undefined
   getAssetByName:   (name: string)                        => ImageAsset | undefined
+  clearAssets:      ()                                    => void
   resolveOrAdd:     (file: File, preferredName: string)   => Promise<ImageAsset>
 }
 
@@ -122,6 +123,11 @@ export const useAssetStore = create<AssetState>((set, get) => ({
       }
     }))
   },
+
+  // ── Clear all assets (on project switch)
+
+  clearAssets: () =>
+    set({ assets: {}, loading: false, error: null }),
 
   // ── Lookups ───────────────────────────────────────────────────────────────
 
