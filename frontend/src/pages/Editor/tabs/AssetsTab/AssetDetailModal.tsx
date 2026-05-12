@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
-import { useAssetStore } from '../../../../store/useAssetStore'
+import { useAssetStore }  from '../../../../store/useAssetStore'
 import { useEditorStore } from '../../../../store/useEditorStore'
-import { useConfirm } from '../../../../hooks/useConfirm'
-import { ConfirmDialog } from '../../../../components/ConfirmDialog/ConfirmDialog'
+import { useConfirm }     from '../../../../hooks/useConfirm'
+import { ConfirmDialog }  from '../../../../components/ConfirmDialog/ConfirmDialog'
 import type { ImageAsset } from '../../../../types/asset'
 import styles from './AssetDetailModal.module.scss'
 
@@ -13,15 +13,14 @@ type Props = {
 }
 
 export function AssetDetailModal({ asset, onClose, onDeleted }: Props) {
-  const { renameAsset, removeAsset }   = useAssetStore()
-  const { syncAssetName, template }    = useEditorStore()
-  const { confirm, dialogProps }       = useConfirm()
+  const { renameAsset, removeAsset } = useAssetStore()
+  const { syncAssetName, template }  = useEditorStore()
+  const { confirm, dialogProps }     = useConfirm()
 
-  const [name,     setName]     = useState(asset.name)
-  const [editing,  setEditing]  = useState(false)
-  const [nameErr,  setNameErr]  = useState('')
+  const [name,    setName]    = useState(asset.name)
+  const [editing, setEditing] = useState(false)
+  const [nameErr, setNameErr] = useState('')
 
-  // Count how many elements reference this asset
   const usageCount = template.elements.filter((el) => {
     if (el.type !== 'image') return false
     const src = (el as any).props.src
@@ -31,7 +30,6 @@ export function AssetDetailModal({ asset, onClose, onDeleted }: Props) {
     )
   }).length
 
-  // Close on Escape
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -50,7 +48,6 @@ export function AssetDetailModal({ asset, onClose, onDeleted }: Props) {
 
     const oldName = asset.name
     renameAsset(asset.id, trimmed)
-    // Read back the actual name (may have been deduplicated)
     const actualName = useAssetStore.getState().assets[asset.id]?.name ?? trimmed
     syncAssetName(oldName, actualName)
     setName(actualName)
@@ -64,13 +61,10 @@ export function AssetDetailModal({ asset, onClose, onDeleted }: Props) {
       : 'This image will be permanently removed from your library.'
 
     const ok = await confirm({
-      title:        'Remove image?',
-      message,
-      confirmLabel: 'Remove',
-      variant:      'danger',
+      title: 'Remove image?', message, confirmLabel: 'Remove', variant: 'danger',
     })
     if (!ok) return
-    removeAsset(asset.id)
+    await removeAsset(asset.id)
     onDeleted()
   }
 
@@ -85,14 +79,12 @@ export function AssetDetailModal({ asset, onClose, onDeleted }: Props) {
       <div className={styles.overlay} onClick={onClose}>
         <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
 
-          {/* Preview */}
+          {/* Preview — url instead of dataUrl */}
           <div className={styles.preview}>
-            <img src={asset.dataUrl} alt={asset.name} />
+            <img src={asset.url} alt={asset.name} />
           </div>
 
-          {/* Info */}
           <div className={styles.info}>
-
             <div className={styles.nameRow}>
               {editing ? (
                 <div className={styles.nameEditWrap}>
@@ -113,24 +105,17 @@ export function AssetDetailModal({ asset, onClose, onDeleted }: Props) {
               ) : (
                 <>
                   <h2 className={styles.assetName}>{asset.name}</h2>
-                  <button
-                    className={styles.renameBtn}
-                    onClick={() => setEditing(true)}
-                    title="Rename"
-                  >
+                  <button className={styles.renameBtn} onClick={() => setEditing(true)} title="Rename">
                     ✎
                   </button>
                 </>
               )}
             </div>
 
-            {/* Metadata */}
             <div className={styles.metaGrid}>
               <div className={styles.metaItem}>
                 <span className={styles.metaLabel}>Dimensions</span>
-                <span className={styles.metaValue}>
-                  {asset.width} × {asset.height}px
-                </span>
+                <span className={styles.metaValue}>{asset.width} × {asset.height}px</span>
               </div>
               <div className={styles.metaItem}>
                 <span className={styles.metaLabel}>File size</span>
@@ -147,32 +132,23 @@ export function AssetDetailModal({ asset, onClose, onDeleted }: Props) {
               <div className={styles.metaItem}>
                 <span className={styles.metaLabel}>Used in template</span>
                 <span className={`${styles.metaValue} ${usageCount > 0 ? styles.metaUsed : ''}`}>
-                  {usageCount > 0
-                    ? `${usageCount} element${usageCount !== 1 ? 's' : ''}`
-                    : 'Not used'}
+                  {usageCount > 0 ? `${usageCount} element${usageCount !== 1 ? 's' : ''}` : 'Not used'}
                 </span>
               </div>
             </div>
 
-            {/* Asset ID — for debugging / future portability */}
             <div className={styles.idRow}>
               <span className={styles.idLabel}>Asset name (used for template matching)</span>
               <code className={styles.idValue}>{asset.name}</code>
             </div>
 
-            {/* Actions */}
             <div className={styles.actions}>
-              <button className={styles.closeBtn} onClick={onClose}>
-                Close
-              </button>
-              <button className={styles.deleteBtn} onClick={handleDelete}>
-                Remove asset
-              </button>
+              <button className={styles.closeBtn} onClick={onClose}>Close</button>
+              <button className={styles.deleteBtn} onClick={handleDelete}>Remove asset</button>
             </div>
           </div>
         </div>
       </div>
-
       {dialogProps && <ConfirmDialog {...dialogProps} />}
     </>
   )

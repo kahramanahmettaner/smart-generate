@@ -10,19 +10,19 @@ type Props = {
   onClose:  () => void
   canvasWidth:  number
   canvasHeight: number
-  applyDimensions?: boolean  // ← default true
+  applyDimensions?: boolean
 }
 
 export function AssetPickerModal({ onSelect, onClose, canvasWidth, canvasHeight, applyDimensions = true }: Props) {
   const { assets, addAsset, removeAsset } = useAssetStore()
   const assetList = Object.values(assets).sort((a, b) => b.createdAt - a.createdAt)
 
-  const [uploading,         setUploading]         = useState(false)
-  const [dragOver,          setDragOver]           = useState(false)
-  const [renamingId,        setRenamingId]         = useState<string | null>(null)
-  const [renameValue,       setRenameValue]        = useState('')
-  const [keepAspectRatio,   setKeepAspectRatio]   = useState(true)
-  const [keepOriginalRes,   setKeepOriginalRes]   = useState(false)
+  const [uploading,       setUploading]       = useState(false)
+  const [dragOver,        setDragOver]        = useState(false)
+  const [renamingId,      setRenamingId]      = useState<string | null>(null)
+  const [renameValue,     setRenameValue]     = useState('')
+  const [keepAspectRatio, setKeepAspectRatio] = useState(true)
+  const [keepOriginalRes, setKeepOriginalRes] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const getDims = (asset: ImageAsset) =>
@@ -62,7 +62,6 @@ export function AssetPickerModal({ onSelect, onClose, canvasWidth, canvasHeight,
       const oldName = assets[renamingId]?.name
       const newName = renameValue.trim()
       useAssetStore.getState().renameAsset(renamingId, newName)
-      // Sync template references
       const safeName = useAssetStore.getState().assets[renamingId]?.name
       if (oldName && safeName) {
         useEditorStore.getState().syncAssetName(oldName, safeName)
@@ -85,7 +84,7 @@ export function AssetPickerModal({ onSelect, onClose, canvasWidth, canvasHeight,
         {/* Upload zone */}
         <div
           className={`${styles.dropZone} ${dragOver ? styles.dragOver : ''}`}
-          onDragOver={(e) => { e.preventDefault(); setDragOver(true)  }}
+          onDragOver={(e) => { e.preventDefault(); setDragOver(true) }}
           onDragLeave={() => setDragOver(false)}
           onDrop={handleDrop}
           onClick={() => fileInputRef.current?.click()}
@@ -109,7 +108,6 @@ export function AssetPickerModal({ onSelect, onClose, canvasWidth, canvasHeight,
           )}
         </div>
 
-        {/* Only show size options when dimensions will be applied */}
         {applyDimensions && (
           <div className={styles.sizeOptions}>
             <span className={styles.sizeOptionsLabel}>When adding to canvas:</span>
@@ -135,7 +133,6 @@ export function AssetPickerModal({ onSelect, onClose, canvasWidth, canvasHeight,
           </div>
         )}
 
-        {/* Placeholder context hint */}
         {!applyDimensions && (
           <p className={styles.placeholderHint}>
             This image will only appear in the editor as a preview.
@@ -143,7 +140,6 @@ export function AssetPickerModal({ onSelect, onClose, canvasWidth, canvasHeight,
           </p>
         )}
 
-        {/* Library grid */}
         {assetList.length > 0 ? (
           <div className={styles.grid}>
             {assetList.map((asset) => (
@@ -153,7 +149,8 @@ export function AssetPickerModal({ onSelect, onClose, canvasWidth, canvasHeight,
                 onClick={() => onSelect(asset, getDims(asset))}
               >
                 <div className={styles.assetThumb}>
-                  <img src={asset.dataUrl} alt={asset.name} />
+                  {/* url instead of dataUrl */}
+                  <img src={asset.url} alt={asset.name} />
                 </div>
 
                 <div className={styles.assetMeta}>

@@ -8,44 +8,42 @@ import { buildFileName } from './renderFilename'
 type ProgressCallback = (progress: RenderProgress) => void
 
 export async function runRenderJob(
-  template:  Template,
-  rows:      DataRow[],
-  assets:    Record<string, ImageAsset>,
-  config:    RenderConfig,
+  template:   Template,
+  rows:       DataRow[],
+  assets:     Record<string, ImageAsset>,
+  config:     RenderConfig,
   onProgress: ProgressCallback
 ): Promise<void> {
-  const total  = rows.length
+  const total = rows.length
 
   onProgress({ status: 'rendering', current: 0, total, message: 'Starting render…' })
 
-    // Build asset map for worker: name variants → dataUrl
-    const assetMap: Record<string, string> = {}
-    Object.values(assets).forEach((asset) => {
+  // Build asset map for worker: name variants → url
+  // Worker will fetch the URL to get image data
+  const assetMap: Record<string, string> = {}
+  Object.values(assets).forEach((asset) => {
     // by id
-    assetMap[asset.id] = asset.dataUrl
+    assetMap[asset.id] = asset.url
 
-    // by name as-is (lowercase)
-    assetMap[asset.name.toLowerCase()] = asset.dataUrl
+    // by name (lowercase)
+    assetMap[asset.name.toLowerCase()] = asset.url
 
-    // by name without extension (in case name somehow has one)
+    // by name without extension
     const nameNoExt = asset.name.replace(/\.[^/.]+$/, '').toLowerCase()
     if (nameNoExt !== asset.name.toLowerCase()) {
-        assetMap[nameNoExt] = asset.dataUrl
+      assetMap[nameNoExt] = asset.url
     }
-    })
+  })
 
   const blobs: { name: string; blob: Blob }[] = []
 
-  // Create worker
   const worker = new Worker(
     new URL('../workers/renderWorker.ts', import.meta.url),
     { type: 'module' }
   )
 
-  // Process jobs sequentially
   for (let i = 0; i < rows.length; i++) {
-    const row = rows[i]
-
+    const row      = rows[i]
     const fileName = buildFileName(row, config, i)
 
     onProgress({
@@ -63,12 +61,12 @@ export async function runRenderJob(
       worker.onerror = (e) => reject(new Error(e.message))
 
       worker.postMessage({
-        type:     'render',
-        index:    i,          // ← flat, not nested in job object
-        rowData:  row,
+        type:    'render',
+        index:   i,
+        rowData: row,
         template,
         config,
-        assets:   assetMap,
+        assets:  assetMap,
       })
     })
 
@@ -89,6 +87,3 @@ export async function runRenderJob(
 
   onProgress({ status: 'done', current: total, total, message: `${total} images rendered` })
 }
-
-
-

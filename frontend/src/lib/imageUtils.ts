@@ -42,20 +42,13 @@ export function guessMimeType(filename: string): string {
   return map[ext ?? ''] ?? 'image/png'
 }
 
-export function readFileAsDataUrl(file: File): Promise<string> {
+// Get image dimensions from any URL (object URL, http URL, data URL)
+export function getImageDimensions(src: string): Promise<{ width: number; height: number }> {
   return new Promise((resolve, reject) => {
-    const reader   = new FileReader()
-    reader.onload  = () => resolve(reader.result as string)
-    reader.onerror = () => reject(new Error('Failed to read file'))
-    reader.readAsDataURL(file)
-  })
-}
-
-export function getImageDimensions(dataUrl: string): Promise<{ width: number; height: number }> {
-  return new Promise((resolve) => {
-    const img  = new Image()
-    img.onload = () => resolve({ width: img.naturalWidth, height: img.naturalHeight })
-    img.src    = dataUrl
+    const img    = new Image()
+    img.onload   = () => resolve({ width: img.naturalWidth, height: img.naturalHeight })
+    img.onerror  = () => reject(new Error('Failed to load image'))
+    img.src      = src
   })
 }
 

@@ -5,11 +5,11 @@ import type { ImageAsset } from '../../types/asset'
 import { useAssetStore } from '../../store/useAssetStore'
 
 type Props = {
-  element: ImageElement
+  element:    ImageElement
   isSelected: boolean
-  onSelect: () => void
-  onChange: (changes: Partial<ImageElement>) => void
-  dataRow?: Record<string, string>
+  onSelect:   () => void
+  onChange:   (changes: Partial<ImageElement>) => void
+  dataRow?:   Record<string, string>
 }
 
 function resolveSrc(
@@ -21,32 +21,26 @@ function resolveSrc(
   if (src.type === 'none') return null
 
   if (src.type === 'asset') {
-    return getAsset(src.assetId)?.dataUrl ?? null
+    // url instead of dataUrl
+    return getAsset(src.assetId)?.url ?? null
   }
 
   if (src.type === 'binding') {
-    // Real data row value takes priority
     const rawValue = dataRow?.[src.column]
     if (!rawValue) {
-      // No row value — use placeholder if set
       if (src.placeholder?.assetId) {
-        return getAsset(src.placeholder.assetId)?.dataUrl ?? null
+        return getAsset(src.placeholder.assetId)?.url ?? null
       }
       return null
     }
 
-    // 1. Try matching by name in asset library (with and without extension)
     const nameWithoutExt = stripExtension(rawValue.trim())
+    const exactMatch     = getAssetByName(rawValue.trim())
+    if (exactMatch) return exactMatch.url
 
-    // Exact match first
-    const exactMatch = getAssetByName(rawValue.trim())
-    if (exactMatch) return exactMatch.dataUrl
-
-    // Match without extension (e.g. "hero" matches "hero.png" or "hero.jpg")
     const partialMatch = getAssetByName(nameWithoutExt)
-    if (partialMatch) return partialMatch.dataUrl
+    if (partialMatch) return partialMatch.url
 
-    // 2. Fall back to treating value as a direct URL
     if (rawValue.startsWith('http') || rawValue.startsWith('data:')) {
       return rawValue
     }
@@ -61,7 +55,6 @@ function stripExtension(name: string): string {
   return name.replace(/\.[^/.]+$/, '')
 }
 
-// Returns Konva crop params to simulate CSS object-fit behavior
 function getCropProps(
   imgW: number, imgH: number,
   boxW: number, boxH: number,
@@ -87,30 +80,26 @@ function getCropProps(
   const imgRatio = imgW / imgH
   const boxRatio = boxW / boxH
 
-  // Horizontal offset helper
   const hOffset = (total: number, used: number) => {
-    if (align.horizontal === 'left')   return 0
-    if (align.horizontal === 'right')  return total - used
-    return (total - used) / 2  // center
+    if (align.horizontal === 'left')  return 0
+    if (align.horizontal === 'right') return total - used
+    return (total - used) / 2
   }
 
-  // Vertical offset helper
   const vOffset = (total: number, used: number) => {
     if (align.vertical === 'top')    return 0
     if (align.vertical === 'bottom') return total - used
-    return (total - used) / 2  // center
+    return (total - used) / 2
   }
 
   if (fit === 'cover') {
     if (imgRatio > boxRatio) {
-      // Wider image — crop left/right based on horizontal align
       const cropH = imgH
       const cropW = imgH * boxRatio
       const cropX = hOffset(imgW, cropW)
       return { cropX, cropY: 0, cropWidth: cropW, cropHeight: cropH,
                x: 0, y: 0, width: boxW, height: boxH }
     } else {
-      // Taller image — crop top/bottom based on vertical align
       const cropW = imgW
       const cropH = imgW / boxRatio
       const cropY = vOffset(imgH, cropH)
@@ -119,7 +108,6 @@ function getCropProps(
     }
   }
 
-  // contain — letterbox with alignment
   if (imgRatio > boxRatio) {
     const renderH = boxW / imgRatio
     const offsetY = vOffset(boxH, renderH)
@@ -138,36 +126,25 @@ type ImageStatus = 'unset' | 'missing' | 'loading' | 'ready'
 export function ImageElementRenderer({
   element, isSelected, onSelect, onChange, dataRow
 }: Props) {
-  const { getAsset, getAssetByName }  = useAssetStore()
-  const [img, setImg] = useState<HTMLImageElement | null>(null)
+  const { getAsset, getAssetByName } = useAssetStore()
+  const [img,    setImg]    = useState<HTMLImageElement | null>(null)
   const [status, setStatus] = useState<ImageStatus>('unset')
 
-  const resolvedSrc = resolveSrc(element.props.src, getAsset, getAssetByName, dataRow)
-
-  // Determine initial status based on src type
-  const expectedSrc = element.props.src
+  const resolvedSrc  = resolveSrc(element.props.src, getAsset, getAssetByName, dataRow)
+  const expectedSrc  = element.props.src
 
   useEffect(() => {
     if (expectedSrc.type === 'none') {
-      setStatus('unset')
-      setImg(null)
-      return
+      setStatus('unset'); setImg(null); return
     }
 
     if (expectedSrc.type === 'asset') {
       const asset = getAsset(expectedSrc.assetId)
-      if (!asset) {
-        // Reference exists but asset not in store
-        setStatus('missing')
-        setImg(null)
-        return
-      }
+      if (!asset) { setStatus('missing'); setImg(null); return }
     }
 
     if (!resolvedSrc) {
-      setStatus('unset')
-      setImg(null)
-      return
+      setStatus('unset'); setImg(null); return
     }
 
     setStatus('loading')
@@ -197,55 +174,39 @@ export function ImageElementRenderer({
     } as Partial<ImageElement>),
   }
 
-  // Ready — render image with fit/align
   if (status === 'ready' && img) {
     const crop = getCropProps(
-      img.naturalWidth,
-      img.naturalHeight,
-      element.width,
-      element.height,
+      img.naturalWidth, img.naturalHeight,
+      element.width, element.height,
       element.props.fit,
       element.props.align ?? { horizontal: 'center', vertical: 'center' }
     )
-  return (
-    <Group
-      {...sharedGroupProps}
-      clipX={0}
-      clipY={0}
-      clipWidth={element.width}
-      clipHeight={element.height}
-    >
-      {/* Transparent hit area — makes the whole frame interactable */}
-      <Rect
-        width={element.width}
-        height={element.height}
-        fill="transparent"
-      />
-      <Image
-        x={crop.x}
-        y={crop.y}
-        width={crop.width}
-        height={crop.height}
-        image={img}
-        cropX={crop.cropX}
-        cropY={crop.cropY}
-        cropWidth={crop.cropWidth}
-        cropHeight={crop.cropHeight}
-        listening={false}
-      />
-    </Group>
-  )
-}
+    return (
+      <Group
+        {...sharedGroupProps}
+        clipX={0} clipY={0}
+        clipWidth={element.width}
+        clipHeight={element.height}
+      >
+        <Rect width={element.width} height={element.height} fill="transparent" />
+        <Image
+          x={crop.x} y={crop.y}
+          width={crop.width} height={crop.height}
+          image={img}
+          cropX={crop.cropX} cropY={crop.cropY}
+          cropWidth={crop.cropWidth} cropHeight={crop.cropHeight}
+          listening={false}
+        />
+      </Group>
+    )
+  }
 
-  // All non-ready states — placeholder with contextual message
   const placeholderConfig = getPlaceholderConfig(status, element.props.src)
 
-  // Placeholder state
   return (
     <Group {...sharedGroupProps}>
       <Rect
-        width={element.width}
-        height={element.height}
+        width={element.width} height={element.height}
         fill={placeholderConfig.fill}
         stroke={isSelected ? '#4A90D9' : placeholderConfig.stroke}
         strokeWidth={1.5}
@@ -273,16 +234,10 @@ export function ImageElementRenderer({
   )
 }
 
-// ─── Placeholder appearance per status ──────────────────────────────────────
-
 type PlaceholderConfig = {
-  fill:       string
-  stroke:     string
-  dash:       number[]
-  icon:       string
-  iconColor:  string
-  label:      string
-  labelColor: string
+  fill: string; stroke: string; dash: number[]
+  icon: string; iconColor: string
+  label: string; labelColor: string
 }
 
 function getPlaceholderConfig(
@@ -290,50 +245,19 @@ function getPlaceholderConfig(
   src: ImageElement['props']['src']
 ): PlaceholderConfig {
   if (status === 'missing') {
-    return {
-      fill:       '#FEF2F2',
-      stroke:     '#FCA5A5',
-      dash:       [6, 3],
-      icon:       '⚠',
-      iconColor:  '#EF4444',
-      label:      'image not found',
-      labelColor: '#EF4444',
-    }
+    return { fill: '#FEF2F2', stroke: '#FCA5A5', dash: [6, 3],
+             icon: '⚠', iconColor: '#EF4444', label: 'image not found', labelColor: '#EF4444' }
   }
-
   if (status === 'loading') {
-    return {
-      fill:       '#F5F4F2',
-      stroke:     '#CCCCCC',
-      dash:       [],
-      icon:       '⊙',
-      iconColor:  '#AAAAAA',
-      label:      'loading…',
-      labelColor: '#AAAAAA',
-    }
+    return { fill: '#F5F4F2', stroke: '#CCCCCC', dash: [],
+             icon: '⊙', iconColor: '#AAAAAA', label: 'loading…', labelColor: '#AAAAAA' }
   }
-
-  // unset
   if (src.type === 'binding') {
     const col = src.type === 'binding' ? src.column : ''
-    return {
-      fill:       '#EEF2FF',
-      stroke:     '#C7D2FE',
-      dash:       [6, 3],
-      icon:       '{ }',
-      iconColor:  '#6366F1',
-      label:      col ? `{{${col}}}` : 'no column set',
-      labelColor: '#6366F1',
-    }
+    return { fill: '#EEF2FF', stroke: '#C7D2FE', dash: [6, 3],
+             icon: '{ }', iconColor: '#6366F1',
+             label: col ? `{{${col}}}` : 'no column set', labelColor: '#6366F1' }
   }
-
-  return {
-    fill:       '#F5F4F2',
-    stroke:     '#CCCCCC',
-    dash:       [6, 3],
-    icon:       '⬚',
-    iconColor:  '#CCCCCC',
-    label:      'no image set',
-    labelColor: '#AAAAAA',
-  }
+  return { fill: '#F5F4F2', stroke: '#CCCCCC', dash: [6, 3],
+           icon: '⬚', iconColor: '#CCCCCC', label: 'no image set', labelColor: '#AAAAAA' }
 }
