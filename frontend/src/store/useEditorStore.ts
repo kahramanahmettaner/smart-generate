@@ -9,6 +9,10 @@ type EditorState = {
   template:   Template
   selectedId: string | null
 
+  // Backend context — set when entering the editor from the dashboard
+  projectId:  string | null
+  templateId: string | null
+
   // Selection
   selectElement:  (id: string | null) => void
 
@@ -23,6 +27,9 @@ type EditorState = {
   loadTemplate:       (template: Template) => void
   exportTemplateJson: () => string
   syncAssetName:      (oldName: string, newName: string) => void
+
+  // Backend context
+  setProjectContext: (projectId: string, templateId: string) => void
 }
 
 const defaultTemplate: Template = {
@@ -41,6 +48,8 @@ export const useEditorStore = create<EditorState>()(
     (set, get) => ({
       template:   defaultTemplate,
       selectedId: null,
+      projectId:  null,
+      templateId: null,
 
       // ─── Selection ──────────────────────────────────────────────────────
 
@@ -103,7 +112,6 @@ export const useEditorStore = create<EditorState>()(
           selectedId: null,
         }),
 
-      // Update loadTemplate to resolve on load:
       loadTemplate: (template) => {
         const resolved = resolveAssetIds(template)
         set({ template: resolved, selectedId: null })
@@ -136,10 +144,15 @@ export const useEditorStore = create<EditorState>()(
             })
           }
         })),
+
+      // ─── Backend context ─────────────────────────────────────────────────
+
+      setProjectContext: (projectId, templateId) =>
+        set({ projectId, templateId }),
     }),
     {
       limit: 50,
-      // Only track template changes in history, not selection
+      // Only track template changes in history, not selection or backend context
       partialize: (state) => ({ template: state.template }),
     }
   )
