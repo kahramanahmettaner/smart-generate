@@ -72,14 +72,17 @@ frontend/src/
     render.ts             ← RenderConfig, RenderProgress, RenderJob
 
   store/                  ← Zustand stores, state + actions only
-    useEditorStore.ts     ← template CRUD, undo/redo, initTemplate, loadTemplate
-    useAssetStore.ts      ← asset library, name-unique enforcement
-    useDatasetStore.ts    ← dataset rows, selected row index
+    useEditorStore.ts     ← template CRUD, undo/redo, initTemplate, loadTemplate, projectId/templateId
+    useAssetStore.ts      ← asset library, calls backend API, fetchAssets() on mount
+    useDatasetStore.ts    ← dataset list + loaded dataset, calls backend API
+    useAuthStore.ts       ← current user (ApiUser), login/logout
+    useProjectStore.ts    ← project list, currentProject, full CRUD
 
   lib/                    ← pure utilities, no React, no state
     utils.ts              ← generateId, clamp, deepClone, uniqueName
     export.ts             ← exportToPng (hides transformer, calls fonts.ready)
-    importData.ts         ← importFile (CSV/Excel/JSON), exportDatasetAsCsv
+    importData.ts         ← exportDatasetAsCsv only (parsing moved to backend in Phase 3)
+    api.ts                ← typed fetch wrapper; authApi, projectsApi, templatesApi, assetsApi, datasetsApi
     imageUtils.ts         ← fitDimensions, readFileAsDataUrl, getImageDimensions,
                              fileNameWithoutExtension, stripExtension
     templateUtils.ts      ← resolve(), resolveAssetIds()
@@ -96,11 +99,13 @@ frontend/src/
     useKeyboard.ts        ← global shortcuts, suppressed in inputs (except meta combos)
     useConfirm.ts         ← Promise-based confirm dialog hook
     useHistory.ts         ← undo/redo wrapping zundo temporal store
+    useAutosave.ts        ← debounced autosave hook; useTemplateSave wires it to backend
 
   components/             ← reusable, not tied to editor
     ConfirmDialog/
     TemplateConfigModal/  ← create/import modal with resolution presets
     AssetPickerModal/     ← image library picker, drag-drop upload, size options
+    AuthGuard/            ← wraps protected routes, redirects to /login if not authed
 
   renderer/               ← Konva rendering layer, NO editor logic
     TemplateRenderer.tsx  ← renders Template JSON onto a Konva Stage
@@ -132,7 +137,8 @@ frontend/src/
           PropRow.tsx
 
   pages/
-    Home/                 ← create new template or import from JSON file
+    Login/                ← Google OAuth login page
+    Home/                 ← project dashboard: sidebar (projects) + grid (templates)
     Editor/
       Editor.tsx          ← tab shell + persistent header + back/export
       tabs/
@@ -202,13 +208,13 @@ type ImageSrc =
 
 ```ts
 type ImageAsset = {
-  id: string        // local random ID (ast_xxxxxxxx) — will become UUID from backend
+  id: string        // UUID from backend
   name: string      // unique display name, no extension — THE matching key
-  dataUrl: string   // base64 data URL (frontend-only phase); replaced by url in backend phase
+  url: string       // served URL: /files/... (local) or https://... (R2)
   width: number; height: number; size: number; createdAt: number
 }
-// NOTE: fileName and mimeType are NOT on this type — kept simple intentionally
-// FUTURE: dataUrl → url (served from local disk or R2 signed URL)
+// NOTE: dataUrl is GONE — images are served over HTTP from the backend
+// url is built by assetsApi.fileUrl() which prepends BASE_URL if needed
 ```
 
 ---
@@ -221,8 +227,8 @@ type ImageAsset = {
 |---|---|
 | Phase 1 — Scaffold + Auth + Projects | ✅ Complete |
 | Phase 2 — Core Data APIs | ✅ Complete |
-| Phase 3 — Frontend Integration | 🔜 Next |
-| Phase 4 — Server-Side Rendering | ⏳ Planned |
+| Phase 3 — Frontend Integration | ✅ Complete |
+| Phase 4 — Server-Side Rendering | 🔜 Next |
 | Phase 5 — Async Batch Queue | ⏳ Planned |
 
 ### Tech Stack
@@ -682,9 +688,9 @@ var(--color-binding-bg/text/border)
 
 | Issue | Status | Notes |
 | --- | --- | --- |
-| localStorage asset limit | Known, deferred | base64 dataUrls hit ~5MB; resolved in Phase 3 (backend storage) |
+| localStorage asset limit | ✅ Resolved | Phase 3: assets stored in backend, served via URL |
 | Worker font rendering | Known, deferred | Inter unavailable in OffscreenCanvas; falls back to system sans-serif |
-| No template autosave | Intentional | Manual JSON export for now; autosave added in Phase 3 |
+| No template autosave | ✅ Resolved | Phase 3: debounced 1.5s autosave via useAutosave hook |
 | Large PDF slow | Acceptable | Sequential image-to-PDF; fine for current scale |
 | `initTemplate`/`loadTemplate` pollutes undo | Known | Should clear zundo history after these calls |
 | No multi-select | Not implemented | Single element selection only |
@@ -726,8 +732,8 @@ docker compose down -v  # stop + wipe data
 
 ### Frontend
 - [ ] Fix worker font rendering (load Inter as ArrayBuffer, pass to worker)
-- [ ] IndexedDB for asset storage (replace localStorage persist) — may be skipped if Phase 3 lands first
-- [ ] Template autosave to localStorage — may be skipped if Phase 3 lands first
+- [x] IndexedDB/localStorage for assets — skipped, replaced by backend API (Phase 3)
+- [x] Template autosave to localStorage — skipped, replaced by backend autosave (Phase 3)
 - [ ] Multi-select elements
 - [ ] Duplicate element (Ctrl+D)
 - [ ] Copy/paste elements
@@ -756,7 +762,26 @@ docker compose down -v  # stop + wipe data
   - [x] `papaparse` + `xlsx` for CSV/Excel parsing (same libs as frontend)
   - [x] Consistent folder structure: `assets/` and `datasets/` subfolders per project
   - [x] URL scheme: `/files/projects/<id>/assets/<filename>`
-- [ ] **Phase 3:** Frontend integration (replace localStorage with API)
+- [x] **Phase 3:** Frontend Integration
+  - [x] `src/lib/api.ts` — typed fetch wrapper, cookie-aware, auto-redirect on 401
+  - [x] `useAuthStore` — current user, login/logout, Google OAuth redirect
+  - [x] `useProjectStore` — project list, create, rename, delete
+  - [x] Login page (`/login`) with Google OAuth button
+  - [x] `AuthGuard` component — protects `/` and `/editor`, redirects to `/login`
+  - [x] `App.tsx` updated — adds `/login` route, wraps protected routes
+  - [x] Home page replaced — full project dashboard (sidebar + template grid)
+  - [x] `useEditorStore` updated — adds `projectId`, `templateId`, `setProjectContext`
+  - [x] `ImageAsset.dataUrl` → `url` — images served over HTTP, no more base64 localStorage
+  - [x] `useAssetStore` — no localStorage, calls backend API, `fetchAssets()` on mount
+  - [x] `AssetPickerModal`, `AssetsTab`, `AssetDetailModal`, `ImageElement` — all use `url`
+  - [x] `renderEngine.ts` — asset map uses `url` (worker fetches via HTTP)
+  - [x] `Dataset` type updated — `id`, `projectId`, `name`, `createdAt`; removed `fileName`/`importedAt`
+  - [x] `useDatasetStore` — no localStorage, calls backend API, `fetchDatasetList()` on mount
+  - [x] `DataTab` — `uploadDataset()`, saved datasets dropdown, delete from backend
+  - [x] `importData.ts` — stripped to `exportDatasetAsCsv` only (parsing moved to backend)
+  - [x] `useAutosave` hook — debounced 1.5s, skips first render, status: saving/saved/error
+  - [x] `Editor.tsx` — autosave wired up, save indicator in header, no confirm on back if saved
+  - [x] `frontend/.env` — `VITE_API_URL=http://localhost:3000`
 - [ ] **Phase 4:** Server-side rendering (`@napi-rs/canvas`)
 - [ ] **Phase 5:** Async batch queue (BullMQ + Redis workers)
 - [ ] **Later:** Swap local disk storage → Cloudflare R2
