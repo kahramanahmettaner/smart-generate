@@ -1,32 +1,56 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useEditorStore } from '../../store/useEditorStore'
-import { useTheme } from '../../hooks/useTheme'
-import { useConfirm } from '../../hooks/useConfirm'
-import { ConfirmDialog } from '../../components/ConfirmDialog/ConfirmDialog'
-import { DesignTab } from './tabs/DesignTab'
-import { AssetsTab } from './tabs/AssetsTab'
-import { DataTab } from './tabs/DataTab'
-import { RenderTab } from './tabs/RenderTab'
+import { useEditorStore }  from '../../store/useEditorStore'
+import { useTheme }        from '../../hooks/useTheme'
+import { useConfirm }      from '../../hooks/useConfirm'
+import { useTemplateSave } from '../../hooks/useAutosave'
+import { ConfirmDialog }   from '../../components/ConfirmDialog/ConfirmDialog'
+import { DesignTab }  from './tabs/DesignTab'
+import { AssetsTab }  from './tabs/AssetsTab'
+import { DataTab }    from './tabs/DataTab'
+import { RenderTab }  from './tabs/RenderTab'
 import styles from './Editor.module.scss'
 
 type Tab = 'design' | 'assets' | 'data' | 'render'
 
 const TABS: { id: Tab; label: string; icon: string }[] = [
-  { id: 'assets', label: 'Assets',  icon: '⬚' },
-  { id: 'design', label: 'Design',  icon: '✏' },
-  { id: 'data',   label: 'Data',    icon: '⊞' },
-  { id: 'render', label: 'Render',  icon: '▶' },
+  { id: 'assets', label: 'Assets', icon: '⬚' },
+  { id: 'design', label: 'Design', icon: '✏' },
+  { id: 'data',   label: 'Data',   icon: '⊞' },
+  { id: 'render', label: 'Render', icon: '▶' },
 ]
 
 export function Editor() {
-  const navigate                       = useNavigate()
-  const { template, exportTemplateJson } = useEditorStore()
-  const { theme, toggle }              = useTheme()
-  const { confirm, dialogProps }       = useConfirm()
-  const [activeTab, setActiveTab]      = useState<Tab>('design')
+  const navigate                            = useNavigate()
+  const { template, exportTemplateJson,
+          projectId, templateId }           = useEditorStore()
+  const { theme, toggle }                   = useTheme()
+  const { confirm, dialogProps }            = useConfirm()
+  const [activeTab, setActiveTab]           = useState<Tab>('design')
 
+  // ── Autosave ──────────────────────────────────────────────────────────────
+  const saveStatus = useTemplateSave(template, projectId, templateId)
+
+  const saveIndicator = () => {
+    if (!projectId || !templateId) return null
+    if (saveStatus === 'saving') return (
+      <span className={styles.saveIndicator}>Saving…</span>
+    )
+    if (saveStatus === 'saved') return (
+      <span className={`${styles.saveIndicator} ${styles.saveIndicatorSaved}`}>✓ Saved</span>
+    )
+    if (saveStatus === 'error') return (
+      <span className={`${styles.saveIndicator} ${styles.saveIndicatorError}`}>Save failed</span>
+    )
+    return null
+  }
+
+  // ── Navigation ────────────────────────────────────────────────────────────
   const handleBack = async () => {
+    if (projectId && templateId) {
+      navigate('/')
+      return
+    }
     const ok = await confirm({
       title:        'Leave editor?',
       message:      'Unsaved changes will be lost. Export your template first to save your work.',
@@ -37,6 +61,7 @@ export function Editor() {
     if (ok) navigate('/')
   }
 
+  // ── JSON export ───────────────────────────────────────────────────────────
   const handleExportJson = () => {
     const json = exportTemplateJson()
     const blob = new Blob([json], { type: 'application/json' })
@@ -61,6 +86,7 @@ export function Editor() {
           <span className={styles.canvasSize}>
             {template.canvas.width} × {template.canvas.height}px
           </span>
+          {saveIndicator()}
         </div>
 
         <div className={styles.headerRight}>
@@ -68,13 +94,12 @@ export function Editor() {
             {theme === 'light' ? '◐ Dark' : '◑ Light'}
           </button>
           <button className={styles.btn} onClick={handleExportJson}>
-            Export template
+            Export JSON
           </button>
         </div>
       </header>
 
-      {/* ── Tab content — each tab is always mounted but hidden when inactive ──
-           This preserves state (zoom, scroll, selections) when switching tabs   */}
+      {/* ── Tab content ── */}
       <div className={styles.tabContent}>
         <div className={activeTab === 'assets' ? styles.tabVisible : styles.tabHidden}>
           <AssetsTab />
