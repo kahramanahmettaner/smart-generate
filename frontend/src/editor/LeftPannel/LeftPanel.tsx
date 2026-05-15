@@ -8,9 +8,9 @@ import { createImageElement, createRectElement, createTextElement } from '../../
 type Tool = 'select' | 'rect' | 'text' | 'image'
 
 type Props = {
-  activeTool: Tool
+  activeTool:   Tool
   onToolChange: (tool: Tool) => void
-  canvasWidth: number
+  canvasWidth:  number
   canvasHeight: number
 }
 
@@ -44,7 +44,6 @@ export function LeftPanel({ activeTool, onToolChange, canvasWidth, canvasHeight 
     }
 
     if (tool === 'image') {
-      // Add placeholder first, then open picker
       const el = createImageElement()
       addElement(el)
       selectElement(el.id)
@@ -60,20 +59,14 @@ export function LeftPanel({ activeTool, onToolChange, canvasWidth, canvasHeight 
         width:  dims.width,
         height: dims.height,
         props: {
-          src: { type: 'asset', assetId: asset.id, assetName: asset.name },
-          fit: 'cover',
+          src:   { type: 'asset', assetId: asset.id, assetName: asset.name },
+          fit:   'cover',
           align: { horizontal: 'center', vertical: 'center' },
         }
       } as any)
     }
     setShowPicker(false)
     setPendingImageId(null)
-  }
-
-  const handlePickerClose = () => {
-    setShowPicker(false)
-    setPendingImageId(null)
-    // Element stays as placeholder — user can set image later via properties
   }
 
   return (
@@ -97,7 +90,7 @@ export function LeftPanel({ activeTool, onToolChange, canvasWidth, canvasHeight 
       {showPicker && (
         <AssetPickerModal
           onSelect={handleAssetSelect}
-          onClose={handlePickerClose}
+          onClose={() => { setShowPicker(false); setPendingImageId(null) }}
           canvasWidth={canvasWidth}
           canvasHeight={canvasHeight}
         />

@@ -1,14 +1,21 @@
 import { Rect } from 'react-konva'
+import type Konva from 'konva'
 import type { RectElement } from '../../types/template'
 
 type Props = {
-  element: RectElement
-  isSelected: boolean
-  onSelect: () => void
-  onChange: (changes: Partial<RectElement>) => void
+  element:     RectElement
+  isSelected:  boolean
+  onSelect:    (additive: boolean) => void
+  onChange:    (changes: Partial<RectElement>) => void
+  onDragMove:  (node: Konva.Node) => void
+  onDragEnd:   (node: Konva.Node) => void
+  snapToGrid:  boolean
+  gridSize:    number
 }
 
-export function RectElementRenderer({ element, isSelected, onSelect, onChange }: Props) {
+export function RectElementRenderer({
+  element, isSelected, onSelect, onChange, onDragMove, onDragEnd
+}: Props) {
   return (
     <Rect
       id={element.id}
@@ -24,14 +31,10 @@ export function RectElementRenderer({ element, isSelected, onSelect, onChange }:
       strokeWidth={element.props.strokeWidth}
       cornerRadius={element.props.cornerRadius}
       draggable={!element.locked}
-      onClick={onSelect}
-      onTap={onSelect}
-      onDragEnd={(e) => {
-        onChange({
-          x: Math.round(e.target.x()),
-          y: Math.round(e.target.y()),
-        } as Partial<RectElement>)
-      }}
+      onClick={(e) => onSelect(e.evt.shiftKey || e.evt.metaKey || e.evt.ctrlKey)}
+      onTap={() => onSelect(false)}
+      onDragMove={(e) => onDragMove(e.target)}
+      onDragEnd={(e)  => onDragEnd(e.target)}
     />
   )
 }

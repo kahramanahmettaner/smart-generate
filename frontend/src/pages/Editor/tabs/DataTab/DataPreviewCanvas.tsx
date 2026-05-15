@@ -17,11 +17,9 @@ export function DataPreviewCanvas({ template, dataRow, rowIndex, totalRows }: Pr
   const containerRef = useRef<HTMLDivElement>(null)
   const [scale, setScale] = useState(1)
 
-  // Calculate scale to fit the canvas inside the container
   useEffect(() => {
     const container = containerRef.current
     if (!container) return
-
     const observer = new ResizeObserver((entries) => {
       const entry = entries[0]
       if (!entry) return
@@ -30,7 +28,6 @@ export function DataPreviewCanvas({ template, dataRow, rowIndex, totalRows }: Pr
       const scaleY = (height - 32) / template.canvas.height
       setScale(Math.min(scaleX, scaleY, 1))
     })
-
     observer.observe(container)
     return () => observer.disconnect()
   }, [template.canvas.width, template.canvas.height])
@@ -40,9 +37,7 @@ export function DataPreviewCanvas({ template, dataRow, rowIndex, totalRows }: Pr
       <div className={styles.header}>
         <span className={styles.title}>Preview</span>
         {rowIndex !== null ? (
-          <span className={styles.rowBadge}>
-            Row {rowIndex + 1} of {totalRows}
-          </span>
+          <span className={styles.rowBadge}>Row {rowIndex + 1} of {totalRows}</span>
         ) : (
           <span className={styles.rowBadgeEmpty}>No row selected</span>
         )}
@@ -60,19 +55,19 @@ export function DataPreviewCanvas({ template, dataRow, rowIndex, totalRows }: Pr
         >
           <TemplateRenderer
             template={template}
-            selectedId={null}
+            selectedIds={[]}
             onSelectElement={() => {}}
             onUpdateElement={() => {}}
+            onUpdateElements={() => {}}
             stageRef={stageRef}
             dataRow={dataRow ?? undefined}
+            readOnly
           />
         </div>
       </div>
 
       {rowIndex === null && (
-        <div className={styles.hint}>
-          Select a row in the table to preview it
-        </div>
+        <div className={styles.hint}>Select a row in the table to preview it</div>
       )}
     </div>
   )

@@ -6,13 +6,14 @@ import type { EditorCanvasHandle } from './EditorCanvasHandle'
 import styles from './EditorCanvas.module.scss'
 
 type Props = {
-  template: Template
-  selectedId: string | null
-  onSelectElement: (id: string | null) => void
-  onUpdateElement: (id: string, changes: Partial<Element>) => void
-  stageRef: React.RefObject<Konva.Stage>  
-  dataRow?:  Record<string, string>
-  readOnly?: boolean
+  template:         Template
+  selectedIds:      string[]
+  onSelectElement:  (id: string | null, additive: boolean) => void
+  onUpdateElement:  (id: string, changes: Partial<Element>) => void
+  onUpdateElements: (ids: string[], changes: Partial<Element>) => void
+  stageRef:         React.RefObject<Konva.Stage>
+  dataRow?:         Record<string, string>
+  readOnly?:        boolean
 }
 
 const MIN_ZOOM = 0.05
@@ -23,66 +24,42 @@ const ZOOM_STEP = 0.1
 type Offset = { x: number; y: number }
 
 export const EditorCanvas = forwardRef<EditorCanvasHandle, Props>(function EditorCanvas(
-  { template, selectedId, onSelectElement, onUpdateElement, stageRef, dataRow, readOnly, },
+  { template, selectedIds, onSelectElement, onUpdateElement, onUpdateElements, stageRef, dataRow, readOnly },
   ref
 ) {
-  const [zoom, setZoom] = useState(0.5)
-  const [offset, setOffset] = useState<Offset>({ x: 0, y: 0 })
+  const [zoom,      setZoom]      = useState(0.5)
+  const [offset,    setOffset]    = useState<Offset>({ x: 0, y: 0 })
   const [isPanning, setIsPanning] = useState(false)
 
-  const workspaceRef = useRef<HTMLDivElement>(null)
-  const isPanningRef = useRef(false)
-  const panStartRef  = useRef<{
-    mouseX: number
-    mouseY: number
-    offsetX: number
-    offsetY: number
-  } | null>(null)
-  const spaceHeldRef = useRef(false)
-  const zoomRef      = useRef(zoom)
-  const offsetRef    = useRef(offset)
+  const workspaceRef  = useRef<HTMLDivElement>(null)
+  const isPanningRef  = useRef(false)
+  const panStartRef   = useRef<{ mouseX: number; mouseY: number; offsetX: number; offsetY: number } | null>(null)
+  const spaceHeldRef  = useRef(false)
+  const zoomRef       = useRef(zoom)
+  const offsetRef     = useRef(offset)
 
-  // Keep refs in sync so event listeners always see latest values
   useEffect(() => { zoomRef.current   = zoom   }, [zoom])
   useEffect(() => { offsetRef.current = offset }, [offset])
   useEffect(() => { isPanningRef.current = isPanning }, [isPanning])
 
-  // ─── Zoom helpers ────────────────────────────────────────────────────────
+  // ── Zoom helpers ──────────────────────────────────────────────────────────
 
-  const zoomIn = useCallback(() => {
-    setZoom((z) => parseFloat(Math.min(MAX_ZOOM, z + ZOOM_STEP).toFixed(2)))
-  }, [])
-
-  const zoomOut = useCallback(() => {
-    setZoom((z) => parseFloat(Math.max(MIN_ZOOM, z - ZOOM_STEP).toFixed(2)))
-  }, [])
-
-  const zoomReset = useCallback(() => {
-    setZoom(1)
-    setOffset({ x: 0, y: 0 })
-  }, [])
+  const zoomIn    = useCallback(() => setZoom((z) => parseFloat(Math.min(MAX_ZOOM, z + ZOOM_STEP).toFixed(2))), [])
+  const zoomOut   = useCallback(() => setZoom((z) => parseFloat(Math.max(MIN_ZOOM, z - ZOOM_STEP).toFixed(2))), [])
+  const zoomReset = useCallback(() => { setZoom(1); setOffset({ x: 0, y: 0 }) }, [])
 
   const zoomFit = useCallback(() => {
     const workspace = workspaceRef.current
     if (!workspace) return
     const { width, height } = workspace.getBoundingClientRect()
-    const fitZoom = Math.min(
-      (width  - 80) / template.canvas.width,
-      (height - 80) / template.canvas.height,
-    )
+    const fitZoom = Math.min((width - 80) / template.canvas.width, (height - 80) / template.canvas.height)
     setZoom(parseFloat(fitZoom.toFixed(3)))
     setOffset({ x: 0, y: 0 })
   }, [template.canvas.width, template.canvas.height])
 
-  // Expose handle to parent
-  useImperativeHandle(ref, () => ({
-    zoomIn,
-    zoomOut,
-    zoomFit,
-    zoomReset,
-  }), [zoomIn, zoomOut, zoomFit, zoomReset])
+  useImperativeHandle(ref, () => ({ zoomIn, zoomOut, zoomFit, zoomReset }), [zoomIn, zoomOut, zoomFit, zoomReset])
 
-  // ─── Space key pan mode ──────────────────────────────────────────────────
+  // ── Space key pan mode ────────────────────────────────────────────────────
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -93,14 +70,12 @@ export const EditorCanvas = forwardRef<EditorCanvasHandle, Props>(function Edito
       spaceHeldRef.current = true
       workspaceRef.current?.classList.add(styles.panMode)
     }
-
     const onKeyUp = (e: KeyboardEvent) => {
       if (e.code !== 'Space') return
       spaceHeldRef.current = false
       workspaceRef.current?.classList.remove(styles.panMode)
       if (isPanningRef.current) setIsPanning(false)
     }
-
     window.addEventListener('keydown', onKeyDown)
     window.addEventListener('keyup',   onKeyUp)
     return () => {
@@ -109,16 +84,11 @@ export const EditorCanvas = forwardRef<EditorCanvasHandle, Props>(function Edito
     }
   }, [])
 
-  // ─── Pan ─────────────────────────────────────────────────────────────────
+  // ── Pan ───────────────────────────────────────────────────────────────────
 
   const startPan = useCallback((mouseX: number, mouseY: number) => {
     setIsPanning(true)
-    panStartRef.current = {
-      mouseX,
-      mouseY,
-      offsetX: offsetRef.current.x,
-      offsetY: offsetRef.current.y,
-    }
+    panStartRef.current = { mouseX, mouseY, offsetX: offsetRef.current.x, offsetY: offsetRef.current.y }
   }, [])
 
   const onMouseDown = useCallback((e: React.MouseEvent) => {
@@ -132,23 +102,17 @@ export const EditorCanvas = forwardRef<EditorCanvasHandle, Props>(function Edito
   useEffect(() => {
     const onMouseMove = (e: MouseEvent) => {
       if (!isPanningRef.current || !panStartRef.current) return
-      const dx = e.clientX - panStartRef.current.mouseX
-      const dy = e.clientY - panStartRef.current.mouseY
       setOffset({
-        x: panStartRef.current.offsetX + dx,
-        y: panStartRef.current.offsetY + dy,
+        x: panStartRef.current.offsetX + (e.clientX - panStartRef.current.mouseX),
+        y: panStartRef.current.offsetY + (e.clientY - panStartRef.current.mouseY),
       })
     }
-
     const onMouseUp = () => {
       if (!isPanningRef.current) return
       setIsPanning(false)
       panStartRef.current = null
-      if (!spaceHeldRef.current) {
-        workspaceRef.current?.classList.remove(styles.panMode)
-      }
+      if (!spaceHeldRef.current) workspaceRef.current?.classList.remove(styles.panMode)
     }
-
     window.addEventListener('mousemove', onMouseMove)
     window.addEventListener('mouseup',   onMouseUp)
     return () => {
@@ -157,59 +121,53 @@ export const EditorCanvas = forwardRef<EditorCanvasHandle, Props>(function Edito
     }
   }, [])
 
-  // ─── Wheel: zoom toward cursor or scroll to pan ──────────────────────────
+  // ── Wheel zoom / scroll ───────────────────────────────────────────────────
 
   const onWheel = useCallback((e: React.WheelEvent) => {
     e.preventDefault()
-
     if (!e.ctrlKey && !e.metaKey) {
       setOffset((o) => ({ x: o.x - e.deltaX, y: o.y - e.deltaY }))
       return
     }
-
     const workspace = workspaceRef.current
     if (!workspace) return
     const rect   = workspace.getBoundingClientRect()
     const mouseX = e.clientX - rect.left  - rect.width  / 2
     const mouseY = e.clientY - rect.top   - rect.height / 2
-
     setZoom((prevZoom) => {
-      const delta     = -e.deltaY * ZOOM_SENSITIVITY
-      const nextZoom  = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, prevZoom + delta * prevZoom))
-      const zoomRatio = nextZoom / prevZoom
-      setOffset((o) => ({
-        x: mouseX - (mouseX - o.x) * zoomRatio,
-        y: mouseY - (mouseY - o.y) * zoomRatio,
-      }))
+      const delta    = -e.deltaY * ZOOM_SENSITIVITY
+      const nextZoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, prevZoom + delta * prevZoom))
+      const ratio    = nextZoom / prevZoom
+      setOffset((o) => ({ x: mouseX - (mouseX - o.x) * ratio, y: mouseY - (mouseY - o.y) * ratio }))
       return nextZoom
     })
   }, [])
-
-  // ─── Render ───────────────────────────────────────────────────────────────
 
   return (
     <div
       className={`${styles.workspace} ${isPanning ? styles.panning : ''}`}
       ref={workspaceRef}
-      onMouseDown={readOnly ? undefined : onMouseDown}  // ← disable pan in readOnly
+      onMouseDown={readOnly ? undefined : onMouseDown}
       onWheel={onWheel}
     >
       <div
         className={styles.canvasFrame}
         style={{
-          width: template.canvas.width,
-          height: template.canvas.height,
-          transform: `translate(${offset.x}px, ${offset.y}px) scale(${zoom})`,
+          width:           template.canvas.width,
+          height:          template.canvas.height,
+          transform:       `translate(${offset.x}px, ${offset.y}px) scale(${zoom})`,
           transformOrigin: 'center center',
         }}
       >
         <TemplateRenderer
           template={template}
-          selectedId={readOnly ? null : selectedId}
+          selectedIds={readOnly ? [] : selectedIds}
           onSelectElement={readOnly ? () => {} : onSelectElement}
           onUpdateElement={readOnly ? () => {} : onUpdateElement}
+          onUpdateElements={readOnly ? () => {} : onUpdateElements}
           stageRef={stageRef}
-          dataRow={dataRow}   // ← pass through
+          dataRow={dataRow}
+          readOnly={readOnly}
         />
       </div>
 
@@ -220,9 +178,7 @@ export const EditorCanvas = forwardRef<EditorCanvasHandle, Props>(function Edito
         </button>
         <button className={styles.zoomBtn} onClick={zoomIn} title="Zoom in">+</button>
         <div className={styles.zoomDivider} />
-        <button className={styles.zoomBtn} onClick={zoomFit} title="Fit to screen">
-          Fit
-        </button>
+        <button className={styles.zoomBtn} onClick={zoomFit} title="Fit to screen">Fit</button>
       </div>
 
       <div className={`${styles.panHint} ${isPanning ? styles.panHintVisible : ''}`}>

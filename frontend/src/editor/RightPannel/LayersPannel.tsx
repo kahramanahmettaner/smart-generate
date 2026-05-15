@@ -14,21 +14,22 @@ const elementIcon = (type: string) => {
 const elementLabel = (el: any): string => {
   if (el.type === 'text') {
     const content = el.props.content
-    const val = content.type === 'static'
-      ? content.value
-      : `{{${content.column}}}`
+    const val = content.type === 'static' ? content.value : `{{${content.column}}}`
     return val.length > 20 ? val.slice(0, 20) + '…' : val
   }
   return el.type.charAt(0).toUpperCase() + el.type.slice(1)
 }
 
-type Props = {
-  height: number
-}
+type Props = { height: number }
 
 export function LayersPanel({ height }: Props) {
   const [collapsed, setCollapsed] = useState(false)
-  const { template, selectedId, selectElement, updateElement, reorderElements, deleteElement } = useEditorStore()
+  const {
+    template, selectedIds,
+    selectElement, toggleSelection,
+    updateElement, reorderElements, deleteElement,
+  } = useEditorStore()
+
   const elements = [...template.elements].reverse()
 
   const toggleVisibility = (id: string, visible: boolean) =>
@@ -41,8 +42,8 @@ export function LayersPanel({ height }: Props) {
     const ids = template.elements.map((e) => e.id)
     const idx = ids.indexOf(id)
     if (idx >= ids.length - 1) return
-    const next = [...ids]
-    ;[next[idx], next[idx + 1]] = [next[idx + 1], next[idx]]
+    const next = [...ids];
+    [next[idx], next[idx + 1]] = [next[idx + 1], next[idx]]
     reorderElements(next)
   }
 
@@ -50,9 +51,17 @@ export function LayersPanel({ height }: Props) {
     const ids = template.elements.map((e) => e.id)
     const idx = ids.indexOf(id)
     if (idx <= 0) return
-    const next = [...ids]
-    ;[next[idx], next[idx - 1]] = [next[idx - 1], next[idx]]
+    const next = [...ids];
+    [next[idx], next[idx - 1]] = [next[idx - 1], next[idx]]
     reorderElements(next)
+  }
+
+  const handleItemClick = (id: string, e: React.MouseEvent) => {
+    if (e.shiftKey || e.metaKey || e.ctrlKey) {
+      toggleSelection(id)
+    } else {
+      selectElement(id)
+    }
   }
 
   return (
@@ -60,16 +69,16 @@ export function LayersPanel({ height }: Props) {
       className={`${styles.panel} ${collapsed ? styles.collapsed : ''}`}
       style={!collapsed ? { height } : undefined}
     >
-      <button
-        className={styles.header}
-        onClick={() => setCollapsed((c) => !c)}
-      >
+      <button className={styles.header} onClick={() => setCollapsed((c) => !c)}>
         <div className={styles.headerLeft}>
-          <span className={`${styles.caret} ${collapsed ? styles.caretClosed : ''}`}>
-            ▾
-          </span>
+          <span className={`${styles.caret} ${collapsed ? styles.caretClosed : ''}`}>▾</span>
           <span className={styles.title}>Layers</span>
           <span className={styles.count}>{template.elements.length}</span>
+          {selectedIds.length > 1 && (
+            <span className={styles.count} style={{ color: 'var(--color-accent)' }}>
+              {selectedIds.length} selected
+            </span>
+          )}
         </div>
       </button>
 
@@ -81,8 +90,8 @@ export function LayersPanel({ height }: Props) {
           {elements.map((el) => (
             <div
               key={el.id}
-              className={`${styles.item} ${el.id === selectedId ? styles.selected : ''}`}
-              onClick={() => selectElement(el.id)}
+              className={`${styles.item} ${selectedIds.includes(el.id) ? styles.selected : ''}`}
+              onClick={(e) => handleItemClick(el.id, e)}
             >
               <span className={styles.itemIcon}>{elementIcon(el.type)}</span>
               <span className={styles.itemName}>{elementLabel(el)}</span>

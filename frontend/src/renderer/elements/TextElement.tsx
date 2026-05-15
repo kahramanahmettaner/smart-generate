@@ -1,16 +1,23 @@
 import { Text } from 'react-konva'
+import type Konva from 'konva'
 import type { TextElement } from '../../types/template'
 import { resolve } from '../../lib/templateUtils'
 
 type Props = {
-  element: TextElement
+  element:    TextElement
   isSelected: boolean
-  onSelect: () => void
-  onChange: (changes: Partial<TextElement>) => void
-  dataRow?: Record<string, string>
+  onSelect:   (additive: boolean) => void
+  onChange:   (changes: Partial<TextElement>) => void
+  onDragMove: (node: Konva.Node) => void
+  onDragEnd:  (node: Konva.Node) => void
+  snapToGrid: boolean
+  gridSize:   number
+  dataRow?:   Record<string, string>
 }
 
-export function TextElementRenderer({ element, isSelected, onSelect, onChange, dataRow }: Props) {
+export function TextElementRenderer({
+  element, isSelected, onSelect, onChange, onDragMove, onDragEnd, dataRow
+}: Props) {
   const content = resolve(element.props.content, dataRow) as string
 
   return (
@@ -31,14 +38,10 @@ export function TextElementRenderer({ element, isSelected, onSelect, onChange, d
       align={element.props.align}
       lineHeight={element.props.lineHeight}
       draggable={!element.locked}
-      onClick={onSelect}
-      onTap={onSelect}
-      onDragEnd={(e) => {
-        onChange({
-          x: Math.round(e.target.x()),
-          y: Math.round(e.target.y()),
-        } as Partial<TextElement>)
-      }}
+      onClick={(e) => onSelect(e.evt.shiftKey || e.evt.metaKey || e.evt.ctrlKey)}
+      onTap={() => onSelect(false)}
+      onDragMove={(e) => onDragMove(e.target)}
+      onDragEnd={(e)  => onDragEnd(e.target)}
     />
   )
 }

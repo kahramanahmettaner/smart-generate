@@ -1,5 +1,6 @@
 import { Image, Rect, Text, Group } from 'react-konva'
 import { useEffect, useState } from 'react'
+import type Konva from 'konva'
 import type { ImageAlign, ImageElement } from '../../types/template'
 import type { ImageAsset } from '../../types/asset'
 import { useAssetStore } from '../../store/useAssetStore'
@@ -7,8 +8,12 @@ import { useAssetStore } from '../../store/useAssetStore'
 type Props = {
   element:    ImageElement
   isSelected: boolean
-  onSelect:   () => void
+  onSelect:   (additive: boolean) => void
   onChange:   (changes: Partial<ImageElement>) => void
+  onDragMove: (node: Konva.Node) => void
+  onDragEnd:  (node: Konva.Node) => void
+  snapToGrid: boolean
+  gridSize:   number
   dataRow?:   Record<string, string>
 }
 
@@ -19,134 +24,80 @@ function resolveSrc(
   dataRow?: Record<string, string>
 ): string | null {
   if (src.type === 'none') return null
-
-  if (src.type === 'asset') {
-    // url instead of dataUrl
-    return getAsset(src.assetId)?.url ?? null
-  }
-
+  if (src.type === 'asset') return getAsset(src.assetId)?.url ?? null
   if (src.type === 'binding') {
     const rawValue = dataRow?.[src.column]
     if (!rawValue) {
-      if (src.placeholder?.assetId) {
-        return getAsset(src.placeholder.assetId)?.url ?? null
-      }
-      return null
+      return src.placeholder?.assetId ? getAsset(src.placeholder.assetId)?.url ?? null : null
     }
-
-    const nameWithoutExt = stripExtension(rawValue.trim())
-    const exactMatch     = getAssetByName(rawValue.trim())
-    if (exactMatch) return exactMatch.url
-
-    const partialMatch = getAssetByName(nameWithoutExt)
-    if (partialMatch) return partialMatch.url
-
-    if (rawValue.startsWith('http') || rawValue.startsWith('data:')) {
-      return rawValue
-    }
-
-    return null
+    const nameWithoutExt = rawValue.trim().replace(/\.[^/.]+$/, '')
+    return getAssetByName(rawValue.trim())?.url
+        ?? getAssetByName(nameWithoutExt)?.url
+        ?? (rawValue.startsWith('http') || rawValue.startsWith('data:') ? rawValue : null)
   }
-
   return null
 }
 
-function stripExtension(name: string): string {
-  return name.replace(/\.[^/.]+$/, '')
-}
-
 function getCropProps(
-  imgW: number, imgH: number,
-  boxW: number, boxH: number,
-  fit:   'cover' | 'contain' | 'fill',
+  imgW: number, imgH: number, boxW: number, boxH: number,
+  fit: 'cover' | 'contain' | 'fill',
   align: ImageAlign = { horizontal: 'center', vertical: 'center' }
-): {
-  cropX: number; cropY: number
-  cropWidth: number; cropHeight: number
-  x: number; y: number
-  width: number; height: number
-} {
-  if (!imgW || !imgH || !boxW || !boxH ||
-      isNaN(imgW) || isNaN(imgH) || isNaN(boxW) || isNaN(boxH)) {
+) {
+  if (!imgW || !imgH || !boxW || !boxH) {
     return { cropX: 0, cropY: 0, cropWidth: imgW || 1, cropHeight: imgH || 1,
              x: 0, y: 0, width: boxW || 1, height: boxH || 1 }
   }
-
   if (fit === 'fill') {
     return { cropX: 0, cropY: 0, cropWidth: imgW, cropHeight: imgH,
              x: 0, y: 0, width: boxW, height: boxH }
   }
-
   const imgRatio = imgW / imgH
   const boxRatio = boxW / boxH
-
-  const hOffset = (total: number, used: number) => {
-    if (align.horizontal === 'left')  return 0
-    if (align.horizontal === 'right') return total - used
-    return (total - used) / 2
-  }
-
-  const vOffset = (total: number, used: number) => {
-    if (align.vertical === 'top')    return 0
-    if (align.vertical === 'bottom') return total - used
-    return (total - used) / 2
-  }
+  const hOff = (total: number, used: number) =>
+    align.horizontal === 'left' ? 0 : align.horizontal === 'right' ? total - used : (total - used) / 2
+  const vOff = (total: number, used: number) =>
+    align.vertical === 'top' ? 0 : align.vertical === 'bottom' ? total - used : (total - used) / 2
 
   if (fit === 'cover') {
     if (imgRatio > boxRatio) {
-      const cropH = imgH
       const cropW = imgH * boxRatio
-      const cropX = hOffset(imgW, cropW)
-      return { cropX, cropY: 0, cropWidth: cropW, cropHeight: cropH,
+      return { cropX: hOff(imgW, cropW), cropY: 0, cropWidth: cropW, cropHeight: imgH,
                x: 0, y: 0, width: boxW, height: boxH }
     } else {
-      const cropW = imgW
       const cropH = imgW / boxRatio
-      const cropY = vOffset(imgH, cropH)
-      return { cropX: 0, cropY, cropWidth: cropW, cropHeight: cropH,
+      return { cropX: 0, cropY: vOff(imgH, cropH), cropWidth: imgW, cropHeight: cropH,
                x: 0, y: 0, width: boxW, height: boxH }
     }
   }
-
   if (imgRatio > boxRatio) {
     const renderH = boxW / imgRatio
-    const offsetY = vOffset(boxH, renderH)
     return { cropX: 0, cropY: 0, cropWidth: imgW, cropHeight: imgH,
-             x: 0, y: offsetY, width: boxW, height: renderH }
+             x: 0, y: vOff(boxH, renderH), width: boxW, height: renderH }
   } else {
     const renderW = boxH * imgRatio
-    const offsetX = hOffset(boxW, renderW)
     return { cropX: 0, cropY: 0, cropWidth: imgW, cropHeight: imgH,
-             x: offsetX, y: 0, width: renderW, height: boxH }
+             x: hOff(boxW, renderW), y: 0, width: renderW, height: boxH }
   }
 }
 
 type ImageStatus = 'unset' | 'missing' | 'loading' | 'ready'
 
 export function ImageElementRenderer({
-  element, isSelected, onSelect, onChange, dataRow
+  element, isSelected, onSelect, onChange, onDragMove, onDragEnd, dataRow
 }: Props) {
   const { getAsset, getAssetByName } = useAssetStore()
   const [img,    setImg]    = useState<HTMLImageElement | null>(null)
   const [status, setStatus] = useState<ImageStatus>('unset')
 
-  const resolvedSrc  = resolveSrc(element.props.src, getAsset, getAssetByName, dataRow)
-  const expectedSrc  = element.props.src
+  const resolvedSrc = resolveSrc(element.props.src, getAsset, getAssetByName, dataRow)
+  const expectedSrc = element.props.src
 
   useEffect(() => {
-    if (expectedSrc.type === 'none') {
-      setStatus('unset'); setImg(null); return
+    if (expectedSrc.type === 'none') { setStatus('unset'); setImg(null); return }
+    if (expectedSrc.type === 'asset' && !getAsset(expectedSrc.assetId)) {
+      setStatus('missing'); setImg(null); return
     }
-
-    if (expectedSrc.type === 'asset') {
-      const asset = getAsset(expectedSrc.assetId)
-      if (!asset) { setStatus('missing'); setImg(null); return }
-    }
-
-    if (!resolvedSrc) {
-      setStatus('unset'); setImg(null); return
-    }
-
+    if (!resolvedSrc) { setStatus('unset'); setImg(null); return }
     setStatus('loading')
     const image       = new window.Image()
     image.crossOrigin = 'anonymous'
@@ -156,7 +107,7 @@ export function ImageElementRenderer({
     return () => { image.onload = null; image.onerror = null }
   }, [resolvedSrc, expectedSrc, getAsset])
 
-  const sharedGroupProps = {
+  const groupProps = {
     id:        element.id,
     x:         element.x,
     y:         element.y,
@@ -166,12 +117,11 @@ export function ImageElementRenderer({
     opacity:   element.opacity,
     visible:   element.visible,
     draggable: !element.locked,
-    onClick:   onSelect,
-    onTap:     onSelect,
-    onDragEnd: (e: any) => onChange({
-      x: Math.round(e.target.x()),
-      y: Math.round(e.target.y()),
-    } as Partial<ImageElement>),
+    onClick:   (e: Konva.KonvaEventObject<MouseEvent>) =>
+      onSelect(e.evt.shiftKey || e.evt.metaKey || e.evt.ctrlKey),
+    onTap:     () => onSelect(false),
+    onDragMove: (e: Konva.KonvaEventObject<DragEvent>) => onDragMove(e.target),
+    onDragEnd:  (e: Konva.KonvaEventObject<DragEvent>) => onDragEnd(e.target),
   }
 
   if (status === 'ready' && img) {
@@ -182,82 +132,48 @@ export function ImageElementRenderer({
       element.props.align ?? { horizontal: 'center', vertical: 'center' }
     )
     return (
-      <Group
-        {...sharedGroupProps}
-        clipX={0} clipY={0}
-        clipWidth={element.width}
-        clipHeight={element.height}
-      >
+      <Group {...groupProps} clipX={0} clipY={0} clipWidth={element.width} clipHeight={element.height}>
         <Rect width={element.width} height={element.height} fill="transparent" />
-        <Image
-          x={crop.x} y={crop.y}
-          width={crop.width} height={crop.height}
-          image={img}
-          cropX={crop.cropX} cropY={crop.cropY}
-          cropWidth={crop.cropWidth} cropHeight={crop.cropHeight}
-          listening={false}
-        />
+        <Image x={crop.x} y={crop.y} width={crop.width} height={crop.height}
+          image={img} cropX={crop.cropX} cropY={crop.cropY}
+          cropWidth={crop.cropWidth} cropHeight={crop.cropHeight} listening={false} />
       </Group>
     )
   }
 
-  const placeholderConfig = getPlaceholderConfig(status, element.props.src)
-
+  const p = getPlaceholderConfig(status, element.props.src)
   return (
-    <Group {...sharedGroupProps}>
-      <Rect
-        width={element.width} height={element.height}
-        fill={placeholderConfig.fill}
-        stroke={isSelected ? '#4A90D9' : placeholderConfig.stroke}
-        strokeWidth={1.5}
-        dash={placeholderConfig.dash}
-      />
-      <Text
-        y={element.height / 2 - 20}
-        width={element.width}
-        text={placeholderConfig.icon}
-        fontSize={26}
-        fill={placeholderConfig.iconColor}
-        align="center"
-        listening={false}
-      />
-      <Text
-        y={element.height / 2 + 12}
-        width={element.width}
-        text={placeholderConfig.label}
-        fontSize={11}
-        fill={placeholderConfig.labelColor}
-        align="center"
-        listening={false}
-      />
+    <Group {...groupProps}>
+      <Rect width={element.width} height={element.height}
+        fill={p.fill} stroke={isSelected ? '#4A90D9' : p.stroke}
+        strokeWidth={1.5} dash={p.dash} />
+      <Text y={element.height / 2 - 20} width={element.width}
+        text={p.icon} fontSize={26} fill={p.iconColor} align="center" listening={false} />
+      <Text y={element.height / 2 + 12} width={element.width}
+        text={p.label} fontSize={11} fill={p.labelColor} align="center" listening={false} />
     </Group>
   )
 }
 
-type PlaceholderConfig = {
-  fill: string; stroke: string; dash: number[]
-  icon: string; iconColor: string
-  label: string; labelColor: string
-}
-
-function getPlaceholderConfig(
-  status: ImageStatus,
-  src: ImageElement['props']['src']
-): PlaceholderConfig {
-  if (status === 'missing') {
-    return { fill: '#FEF2F2', stroke: '#FCA5A5', dash: [6, 3],
-             icon: '⚠', iconColor: '#EF4444', label: 'image not found', labelColor: '#EF4444' }
+function getPlaceholderConfig(status: ImageStatus, src: ImageElement['props']['src']) {
+  if (status === 'missing') return {
+    fill: '#FEF2F2', stroke: '#FCA5A5', dash: [6, 3] as number[],
+    icon: '⚠', iconColor: '#EF4444', label: 'image not found', labelColor: '#EF4444'
   }
-  if (status === 'loading') {
-    return { fill: '#F5F4F2', stroke: '#CCCCCC', dash: [],
-             icon: '⊙', iconColor: '#AAAAAA', label: 'loading…', labelColor: '#AAAAAA' }
+  if (status === 'loading') return {
+    fill: '#F5F4F2', stroke: '#CCCCCC', dash: [] as number[],
+    icon: '⊙', iconColor: '#AAAAAA', label: 'loading…', labelColor: '#AAAAAA'
   }
   if (src.type === 'binding') {
-    const col = src.type === 'binding' ? src.column : ''
-    return { fill: '#EEF2FF', stroke: '#C7D2FE', dash: [6, 3],
-             icon: '{ }', iconColor: '#6366F1',
-             label: col ? `{{${col}}}` : 'no column set', labelColor: '#6366F1' }
+    const col = src.column
+    return {
+      fill: '#EEF2FF', stroke: '#C7D2FE', dash: [6, 3] as number[],
+      icon: '{ }', iconColor: '#6366F1',
+      label: col ? `{{${col}}}` : 'no column set', labelColor: '#6366F1'
+    }
   }
-  return { fill: '#F5F4F2', stroke: '#CCCCCC', dash: [6, 3],
-           icon: '⬚', iconColor: '#CCCCCC', label: 'no image set', labelColor: '#AAAAAA' }
+  return {
+    fill: '#F5F4F2', stroke: '#CCCCCC', dash: [6, 3] as number[],
+    icon: '⬚', iconColor: '#CCCCCC', label: 'no image set', labelColor: '#AAAAAA'
+  }
 }
