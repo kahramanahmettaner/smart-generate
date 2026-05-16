@@ -4,7 +4,9 @@ import { useEditorStore } from '../../store/useEditorStore'
 
 const elementIcon = (type: string) => {
   switch (type) {
-    case 'rect':  return '▭'
+    case 'rect':    return '▭'
+    case 'ellipse': return '○'
+    case 'line':    return '╱'
     case 'text':  return 'T'
     case 'image': return '⬚'
     default:      return '○'

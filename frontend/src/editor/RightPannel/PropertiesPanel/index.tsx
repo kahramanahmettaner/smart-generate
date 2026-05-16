@@ -1,13 +1,16 @@
 import { useState } from 'react'
 import { useEditorStore } from '../../../store/useEditorStore'
-import { AssetPickerModal } from '../../../components/AssetPickerModal/AssetPickerModal'
-import { TransformSection } from './sections/TransformSection'
-import { RectProperties }   from './sections/RectProperties'
-import { TextProperties }   from './sections/TextProperties'
-import { ImageProperties }  from './sections/ImageProperties'
+import { AssetPickerModal }    from '../../../components/AssetPickerModal/AssetPickerModal'
+import { TransformSection }    from './sections/TransformSection'
+import { RectProperties }      from './sections/RectProperties'
+import { EllipseProperties }   from './sections/EllipseProperties'
+import { LineProperties }      from './sections/LineProperties'
+import { TextProperties }      from './sections/TextProperties'
+import { ImageProperties }     from './sections/ImageProperties'
+import { CanvasProperties }    from './sections/CanvasProperties'
 import styles from './PropertiesPanel.module.scss'
-import type { ImageAsset } from '../../../types/asset'
-import type { ImageElement } from '../../../types/template'
+import type { ImageAsset }     from '../../../types/asset'
+import type { ImageElement, EllipseElement, LineElement } from '../../../types/template'
 
 type Props = {
   canvasWidth:  number
@@ -20,11 +23,10 @@ export function PropertiesPanel({ canvasWidth, canvasHeight }: Props) {
 
   const { template, selectedIds, updateElement } = useEditorStore()
 
-  // Properties panel only works with a single selected element
   const selectedId = selectedIds.length === 1 ? selectedIds[0] : null
   const selected   = template.elements.find((el) => el.id === selectedId)
 
-  const onChange = (changes: Partial<Element>) => {
+  const onChange = (changes: Partial<any>) => {
     if (selected) updateElement(selected.id, changes)
   }
 
@@ -35,18 +37,15 @@ export function PropertiesPanel({ canvasWidth, canvasHeight }: Props) {
 
     if (pickerTarget === 'main') {
       onChange({
-        width:  dims.width,
-        height: dims.height,
+        width: dims.width, height: dims.height,
         props: { ...el.props, src: { type: 'asset', assetId: asset.id, assetName: asset.name } }
-      } as any)
+      })
     }
-
     if (pickerTarget === 'placeholder' && src.type === 'binding') {
       onChange({
         props: { ...el.props, src: { ...src, placeholder: { assetId: asset.id, assetName: asset.name } } }
-      } as any)
+      })
     }
-
     setPickerTarget(null)
   }
 
@@ -60,10 +59,14 @@ export function PropertiesPanel({ canvasWidth, canvasHeight }: Props) {
 
         {!collapsed && (
           <>
+            {/* Nothing selected — show canvas properties */}
             {selectedIds.length === 0 && (
-              <p className={styles.empty}>Select an element to edit its properties</p>
+              <div className={styles.content}>
+                <CanvasProperties />
+              </div>
             )}
 
+            {/* Multiple selected */}
             {selectedIds.length > 1 && (
               <p className={styles.empty}>
                 {selectedIds.length} elements selected.
@@ -71,20 +74,33 @@ export function PropertiesPanel({ canvasWidth, canvasHeight }: Props) {
               </p>
             )}
 
+            {/* Single element selected */}
             {selected && (
               <div className={styles.content}>
                 <TransformSection el={selected} onChange={onChange} />
 
                 {selected.type === 'rect' && (
-                  <RectProperties el={selected} onChange={(c) => onChange(c as any)} />
+                  <RectProperties el={selected} onChange={onChange} />
+                )}
+                {selected.type === 'ellipse' && (
+                  <EllipseProperties
+                    el={selected as EllipseElement}
+                    onChange={onChange}
+                  />
+                )}
+                {selected.type === 'line' && (
+                  <LineProperties
+                    el={selected as LineElement}
+                    onChange={onChange}
+                  />
                 )}
                 {selected.type === 'text' && (
-                  <TextProperties el={selected} onChange={(c) => onChange(c as any)} />
+                  <TextProperties el={selected} onChange={onChange} />
                 )}
                 {selected.type === 'image' && (
                   <ImageProperties
                     el={selected as ImageElement}
-                    onChange={(c) => onChange(c as any)}
+                    onChange={onChange}
                     onOpenPicker={(target) => setPickerTarget(target)}
                   />
                 )}

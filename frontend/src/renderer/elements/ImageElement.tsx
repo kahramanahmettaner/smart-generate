@@ -57,7 +57,6 @@ function getCropProps(
     align.horizontal === 'left' ? 0 : align.horizontal === 'right' ? total - used : (total - used) / 2
   const vOff = (total: number, used: number) =>
     align.vertical === 'top' ? 0 : align.vertical === 'bottom' ? total - used : (total - used) / 2
-
   if (fit === 'cover') {
     if (imgRatio > boxRatio) {
       const cropW = imgH * boxRatio
@@ -73,11 +72,10 @@ function getCropProps(
     const renderH = boxW / imgRatio
     return { cropX: 0, cropY: 0, cropWidth: imgW, cropHeight: imgH,
              x: 0, y: vOff(boxH, renderH), width: boxW, height: renderH }
-  } else {
-    const renderW = boxH * imgRatio
-    return { cropX: 0, cropY: 0, cropWidth: imgW, cropHeight: imgH,
-             x: hOff(boxW, renderW), y: 0, width: renderW, height: boxH }
   }
+  const renderW = boxH * imgRatio
+  return { cropX: 0, cropY: 0, cropWidth: imgW, cropHeight: imgH,
+           x: hOff(boxW, renderW), y: 0, width: renderW, height: boxH }
 }
 
 type ImageStatus = 'unset' | 'missing' | 'loading' | 'ready'
@@ -91,6 +89,7 @@ export function ImageElementRenderer({
 
   const resolvedSrc = resolveSrc(element.props.src, getAsset, getAssetByName, dataRow)
   const expectedSrc = element.props.src
+  const cornerRadius = element.props.cornerRadius ?? 0
 
   useEffect(() => {
     if (expectedSrc.type === 'none') { setStatus('unset'); setImg(null); return }
@@ -132,11 +131,36 @@ export function ImageElementRenderer({
       element.props.align ?? { horizontal: 'center', vertical: 'center' }
     )
     return (
-      <Group {...groupProps} clipX={0} clipY={0} clipWidth={element.width} clipHeight={element.height}>
+      <Group
+        {...groupProps}
+        clipX={0} clipY={0}
+        clipWidth={element.width}
+        clipHeight={element.height}
+        // Rounded clip via clipFunc when cornerRadius > 0
+        clipFunc={cornerRadius > 0 ? (ctx) => {
+          const r = Math.min(cornerRadius, element.width / 2, element.height / 2)
+          ctx.beginPath()
+          ctx.moveTo(r, 0)
+          ctx.lineTo(element.width - r, 0)
+          ctx.arcTo(element.width, 0, element.width, r, r)
+          ctx.lineTo(element.width, element.height - r)
+          ctx.arcTo(element.width, element.height, element.width - r, element.height, r)
+          ctx.lineTo(r, element.height)
+          ctx.arcTo(0, element.height, 0, element.height - r, r)
+          ctx.lineTo(0, r)
+          ctx.arcTo(0, 0, r, 0, r)
+          ctx.closePath()
+        } : undefined}
+      >
         <Rect width={element.width} height={element.height} fill="transparent" />
-        <Image x={crop.x} y={crop.y} width={crop.width} height={crop.height}
-          image={img} cropX={crop.cropX} cropY={crop.cropY}
-          cropWidth={crop.cropWidth} cropHeight={crop.cropHeight} listening={false} />
+        <Image
+          x={crop.x} y={crop.y}
+          width={crop.width} height={crop.height}
+          image={img}
+          cropX={crop.cropX} cropY={crop.cropY}
+          cropWidth={crop.cropWidth} cropHeight={crop.cropHeight}
+          listening={false}
+        />
       </Group>
     )
   }
@@ -144,9 +168,14 @@ export function ImageElementRenderer({
   const p = getPlaceholderConfig(status, element.props.src)
   return (
     <Group {...groupProps}>
-      <Rect width={element.width} height={element.height}
-        fill={p.fill} stroke={isSelected ? '#4A90D9' : p.stroke}
-        strokeWidth={1.5} dash={p.dash} />
+      <Rect
+        width={element.width} height={element.height}
+        fill={p.fill}
+        stroke={isSelected ? '#4A90D9' : p.stroke}
+        strokeWidth={1.5}
+        dash={p.dash}
+        cornerRadius={cornerRadius}
+      />
       <Text y={element.height / 2 - 20} width={element.width}
         text={p.icon} fontSize={26} fill={p.iconColor} align="center" listening={false} />
       <Text y={element.height / 2 + 12} width={element.width}

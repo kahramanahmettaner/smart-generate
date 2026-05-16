@@ -2,7 +2,9 @@ import { useRef, useState, useCallback, useEffect } from 'react'
 import { Stage, Layer, Rect, Line } from 'react-konva'
 import type Konva from 'konva'
 import type { Template, Element } from '../types/template'
-import { RectElementRenderer }  from './elements/RectElement'
+import { RectElementRenderer }    from './elements/RectElement'
+import { EllipseElementRenderer } from './elements/EllipseElement'
+import { LineElementRenderer }    from './elements/LineElement'
 import { TextElementRenderer }  from './elements/TextElement'
 import { ImageElementRenderer } from './elements/ImageElement'
 import { MultiTransformer }     from './MultiTransformer'
@@ -328,6 +330,10 @@ export function TemplateRenderer({
                 return <TextElementRenderer  key={el.id} element={el} dataRow={dataRow} {...sharedProps} />
               case 'image':
                 return <ImageElementRenderer key={el.id} element={el} dataRow={dataRow} {...sharedProps} />
+              case 'ellipse':
+                return <EllipseElementRenderer key={el.id} element={el} {...sharedProps} />
+              case 'line':
+                return <LineElementRenderer key={el.id} element={el} {...sharedProps} />
               default:
                 return null
             }

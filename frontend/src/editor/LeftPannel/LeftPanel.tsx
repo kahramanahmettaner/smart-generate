@@ -3,9 +3,12 @@ import styles from './LeftPanel.module.scss'
 import { useEditorStore } from '../../store/useEditorStore'
 import { AssetPickerModal } from '../../components/AssetPickerModal/AssetPickerModal'
 import type { ImageAsset } from '../../types/asset'
-import { createImageElement, createRectElement, createTextElement } from '../../lib/elementDefaults'
+import {
+  createImageElement, createRectElement,
+  createTextElement, createEllipseElement, createLineElement,
+} from '../../lib/elementDefaults'
 
-type Tool = 'select' | 'rect' | 'text' | 'image'
+type Tool = 'select' | 'rect' | 'ellipse' | 'line' | 'text' | 'image'
 
 type Props = {
   activeTool:   Tool
@@ -14,11 +17,13 @@ type Props = {
   canvasHeight: number
 }
 
-const tools = [
-  { id: 'select' as Tool, icon: '↖', label: 'Select' },
-  { id: 'rect'   as Tool, icon: '▭', label: 'Rect'   },
-  { id: 'text'   as Tool, icon: 'T', label: 'Text'   },
-  { id: 'image'  as Tool, icon: '⬚', label: 'Image'  },
+const tools: { id: Tool; icon: string; label: string }[] = [
+  { id: 'select',  icon: '↖', label: 'Select'  },
+  { id: 'rect',    icon: '▭', label: 'Rect'    },
+  { id: 'ellipse', icon: '○', label: 'Ellipse' },
+  { id: 'line',    icon: '╱', label: 'Line'    },
+  { id: 'text',    icon: 'T', label: 'Text'    },
+  { id: 'image',   icon: '⬚', label: 'Image'   },
 ]
 
 export function LeftPanel({ activeTool, onToolChange, canvasWidth, canvasHeight }: Props) {
@@ -31,22 +36,23 @@ export function LeftPanel({ activeTool, onToolChange, canvasWidth, canvasHeight 
 
     if (tool === 'rect') {
       const el = createRectElement()
-      addElement(el)
-      selectElement(el.id)
-      onToolChange('select')
+      addElement(el); selectElement(el.id); onToolChange('select')
     }
-
+    if (tool === 'ellipse') {
+      const el = createEllipseElement()
+      addElement(el); selectElement(el.id); onToolChange('select')
+    }
+    if (tool === 'line') {
+      const el = createLineElement()
+      addElement(el); selectElement(el.id); onToolChange('select')
+    }
     if (tool === 'text') {
       const el = createTextElement()
-      addElement(el)
-      selectElement(el.id)
-      onToolChange('select')
+      addElement(el); selectElement(el.id); onToolChange('select')
     }
-
     if (tool === 'image') {
       const el = createImageElement()
-      addElement(el)
-      selectElement(el.id)
+      addElement(el); selectElement(el.id)
       setPendingImageId(el.id)
       setShowPicker(true)
       onToolChange('select')
@@ -56,12 +62,12 @@ export function LeftPanel({ activeTool, onToolChange, canvasWidth, canvasHeight 
   const handleAssetSelect = (asset: ImageAsset, dims: { width: number; height: number }) => {
     if (pendingImageId) {
       updateElement(pendingImageId, {
-        width:  dims.width,
-        height: dims.height,
+        width: dims.width, height: dims.height,
         props: {
-          src:   { type: 'asset', assetId: asset.id, assetName: asset.name },
-          fit:   'cover',
-          align: { horizontal: 'center', vertical: 'center' },
+          src:          { type: 'asset', assetId: asset.id, assetName: asset.name },
+          fit:          'cover',
+          align:        { horizontal: 'center', vertical: 'center' },
+          cornerRadius: 0,
         }
       } as any)
     }
